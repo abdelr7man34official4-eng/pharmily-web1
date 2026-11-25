@@ -1,0 +1,81 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function isMe(uid) { return signedIn() && request.auth.uid == uid; }
+    function userDoc(uid) { return get(/databases/$(database)/documents/users/$(uid)).data; }
+
+    // ---------- البروفايلات ----------
+    match /users/{uid} {
+      allow read: if signedIn();
+      allow create: if isMe(uid)
+        && request.resource.data.uid == uid
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 80
+        && request.resource.data.photo is string && request.resource.data.photo.size() < 60000;
+      // الاسم ما يتغيرش، والباقي (صورة/لقب/نبذة) تتعدل
+      allow update: if isMe(uid)
+        && request.resource.data.name == resource.data.name
+        && request.resource.data.key == resource.data.key
+        && request.resource.data.photo is string && request.resource.data.photo.size() < 60000
+        && request.resource.data.nickname.size() <= 30
+        && request.resource.data.bio.size() <= 160;
+      allow delete: if false;
+
+      // رسايل Future Me (خاصة بصاحبها بس)
+      match /future/{id} {
+        allow read, delete: if isMe(uid);
+        allow create: if isMe(uid) && request.resource.data.text is string && request.resource.data.text.size() <= 2000;
+      }
+    }
+
+    // ---------- الميموريز ----------
+    match /memories/{id} {
+      allow read: if signedIn();
+      // الاسم إجباري ولازم يطابق اسم صاحب الحساب (مفيش حد ينشر باسم حد تاني)
+      allow create: if signedIn()
+        && request.resource.data.authorId == request.auth.uid
+        && request.resource.data.authorName == userDoc(request.auth.uid).name
+        && request.resource.data.caption is string
+        && request.resource.data.caption.size() > 0 && request.resource.data.caption.size() <= 300
+        && request.resource.data.thumb is string && request.resource.data.thumb.size() < 200000;
+      allow update: if false;
+      allow delete: if signedIn() && resource.data.authorId == request.auth.uid;
+
+      // الصورة الكبيرة (بتتحمل لما حد يفتح الصورة بس)
+      match /blobs/{b} {
+        allow read: if signedIn();
+        allow create: if signedIn()
+          && get(/databases/$(database)/documents/memories/$(id)).data.authorId == request.auth.uid
+          && request.resource.data.data is string && request.resource.data.data.size() < 950000;
+        allow delete: if signedIn()
+          && get(/databases/$(database)/documents/memories/$(id)).data.authorId == request.auth.uid;
+      }
+    }
+
+    // ---------- الشات (بين اتنين بس) ----------
+    match /chats/{chatId} {
+      allow read: if signedIn() && request.auth.uid in resource.data.members;
+      allow create: if signedIn()
+        && request.resource.data.members.size() == 2
+        && request.auth.uid in request.resource.data.members
+        && chatId.matches('.*' + request.auth.uid + '.*');
+      allow update: if signedIn()
+        && request.auth.uid in resource.data.members
+        && request.resource.data.members == resource.data.members;
+      allow delete: if false;
+
+      match /messages/{mid} {
+        allow read: if signedIn()
+          && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.members;
+        allow create: if signedIn()
+          && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.members
+          && request.resource.data.from == request.auth.uid
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 1000;
+        allow update, delete: if false;
+      }
+    }
+  }
+}
