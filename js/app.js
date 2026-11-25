@@ -252,7 +252,7 @@ function renderPeople() {
   const all = PEOPLE.map((p, i) => ({ p, u: usersByKey.get(p.key) })).filter(o => (!v || o.p.key.includes(v)) && (!filterJoined || o.u));
   const n = Math.max(1, Math.ceil(all.length / 30)); if (page > n) page = 1;
   put($("grid"), all.slice((page - 1) * 30, page * 30).map(o => {
-    const photo = o.u?.photo || o.p.photo, nick = o.u?.nickname || o.p.nickname;
+    const photo = o.p.photo /* ثابتة: من فولدر photos بس، الطالب مش بيغيّرها */, nick = o.u?.nickname || o.p.nickname;
     return `<button class="st lift ${o.u ? "" : "off"}" data-act="profile" data-v="${esc(o.p.key)}"><div class="av" style="position:relative">${o.u ? '<span class="dot" title="Joined"></span>' : ""}<span>${esc(initials(o.p.name))}</span>${photo ? `<img src="${esc(photo)}" alt="" loading="lazy" onerror="this.remove()">` : ""}</div><b>${esc(first2(o.p.name))}</b><i>${esc(nick)}</i></button>`;
   }).join(""));
   put($("pages"), n > 1 ? Array.from({ length: n }, (_, i) => `<button class="btn sm ${i + 1 === page ? "on" : ""}" data-p="${i + 1}">${i + 1}</button>`).join("") : "");
