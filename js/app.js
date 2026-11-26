@@ -834,6 +834,12 @@ $("meBtn").onclick = () => $("menu").hidden = !$("menu").hidden;
 $("burger").onclick = () => $("nav").classList.toggle("open");
 
 function moveInd() {
+  const tb = document.getElementById("tabbar");
+  if (tb) {
+    let dot = tb.querySelector(".tab-ind"); if (!dot) { dot = document.createElement("span"); dot.className = "tab-ind"; tb.append(dot); }
+    const t = tb.querySelector("a.on");
+    if (t && t.offsetWidth) { dot.style.transform = `translateX(${t.offsetLeft + t.offsetWidth / 2 - 3}px)`; dot.style.opacity = 1; } else dot.style.opacity = 0;
+  }
   const box = document.querySelector(".links"); if (!box) return;
   let ind = box.querySelector(".ind"); if (!ind) { ind = document.createElement("span"); ind.className = "ind"; box.prepend(ind); }
   const on = box.querySelector("a.on"); if (!on || !on.offsetWidth) { ind.style.opacity = 0; return; }
@@ -858,7 +864,27 @@ function initStatic() {
   // reveal + scroll-spy
   const io = new IntersectionObserver(es => es.forEach(x => x.isIntersecting && x.target.classList.add("in")), { threshold: .12 });
   $$(".rv").forEach(el => io.observe(el));
-  const spy = new IntersectionObserver(es => es.forEach(x => { if (x.isIntersecting) $$(".links a").forEach(a => a.classList.toggle("on", a.getAttribute("href") === "#" + x.target.id)); $$("#tabbar a").forEach(a => a.classList.toggle("on", a.getAttribute("href") === "#" + x.target.id)); moveInd(); }), { rootMargin: "-40% 0px -55% 0px" });
-  ["home", "memories", "meet", "journey", "future"].forEach(id => spy.observe($(id)));
+  // تحديد القسم النشط من مكان السكرول (بيحرّك النقطة في الشريط السفلي والمؤشر في الشريط العلوي)
+  const secs = ["home", "memories", "meet", "journey", "future"].map(id => $(id)).filter(Boolean);
+  let curSec = "", lockUntil = 0, tickS = false;
+  const setActive = id => {
+    if (id === curSec) return; curSec = id;
+    $$(".links a").forEach(a => a.classList.toggle("on", a.getAttribute("href") === "#" + id));
+    $$("#tabbar a").forEach(a => a.classList.toggle("on", a.getAttribute("href") === "#" + id));
+    moveInd();
+  };
+  const spyNow = () => {
+    if (Date.now() < lockUntil) return;
+    const line = innerHeight * .4; let id = secs[0].id;
+    for (const s of secs) if (s.getBoundingClientRect().top <= line) id = s.id;
+    if (innerHeight + scrollY >= document.documentElement.scrollHeight - 6) id = secs[secs.length - 1].id;
+    setActive(id);
+  };
+  addEventListener("scroll", () => { if (!tickS) { tickS = true; requestAnimationFrame(() => { tickS = false; spyNow(); }); } }, { passive: true });
+  document.addEventListener("click", e => {   // لما تدوسي على تبويب: النقطة تروحله فورًا
+    const l = e.target.closest("#tabbar a, .links a"); if (!l) return;
+    const id = (l.getAttribute("href") || "").slice(1); if (secs.some(s => s.id === id)) { lockUntil = Date.now() + 900; setActive(id); setTimeout(spyNow, 950); }
+  });
+  spyNow();
 }
 })();
