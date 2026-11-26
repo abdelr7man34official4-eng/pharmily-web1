@@ -2,7 +2,7 @@
    mobile.css — نسخة الموبايل (شاشات أصغر من 760px)
    تصميم مختلف عن الكمبيوتر: شريط تنقل سفلي، شيتات بتطلع من تحت، فيد للذكريات، شات بملء الشاشة
    ========================================================= */
-:root{--tab:64px;--sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px)}
+:root{--tab:92px;--sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px)}
 html{scroll-padding-top:calc(70px + var(--sat))}
 body{padding-bottom:calc(var(--tab) + var(--sab) + 14px);-webkit-tap-highlight-color:transparent;overscroll-behavior-y:none}
 input,textarea{font-size:16px!important}
@@ -35,30 +35,45 @@ section{padding-top:38px}
 .menu{min-width:250px;border-radius:24px}
 .pop .row{padding:.9em 1em;font-size:1rem}
 
-/* ---------- شريط التبويبات السفلي ---------- */
-#tabbar{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;z-index:60;inset:auto 0 0 0;padding:6px 6px calc(6px + var(--sab));background:rgba(10,9,6,.88);backdrop-filter:blur(22px) saturate(160%);-webkit-backdrop-filter:blur(22px) saturate(160%);border-top:1px solid var(--line2)}
-#tabbar a{display:grid;justify-items:center;gap:2px;padding:7px 0 5px;font-size:.62rem;letter-spacing:.02em;color:var(--g3);border-radius:16px;position:relative;transition:color .25s}
-#tabbar a .ic{width:24px;height:24px}
+/* ---------- شريط التبويبات: كبسولة عايمة وزرار + في النص ---------- */
+#tabbar{display:grid;grid-template-columns:1fr 1fr 76px 1fr 1fr;align-items:center;position:fixed;z-index:60;left:12px;right:12px;bottom:calc(10px + var(--sab));height:62px;padding:0 6px;border-radius:34px;background:linear-gradient(180deg,rgba(30,25,14,.82),rgba(14,12,7,.86));backdrop-filter:blur(28px) saturate(190%);-webkit-backdrop-filter:blur(28px) saturate(190%);border:1px solid rgba(212,175,106,.3);box-shadow:0 20px 44px rgba(0,0,0,.65),0 0 0 1px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.1);animation:barIn .9s var(--ease) .35s both}
+@keyframes barIn{from{opacity:0;transform:translateY(90px) scale(.9)}to{opacity:1;transform:none}}
+#tabbar a{position:relative;display:grid;justify-items:center;align-content:center;gap:3px;height:100%;font-size:.6rem;letter-spacing:.03em;color:rgba(212,175,106,.55);transition:color .3s}
+#tabbar a .ic{width:23px;height:23px;transition:transform .45s cubic-bezier(.3,1.6,.5,1)}
+#tabbar a span{transition:opacity .3s,transform .3s}
+#tabbar a:active .ic{transform:scale(.8)}
 #tabbar a.on{color:var(--g2)}
-#tabbar a.on:before{content:"";position:absolute;top:-7px;width:26px;height:3px;border-radius:0 0 4px 4px;background:var(--g2);box-shadow:0 2px 12px var(--g)}
-#tabbar a.on .ic{transform:translateY(-1px) scale(1.1)}
-#fab{display:grid;position:fixed;z-index:61;inset-inline-end:16px;bottom:calc(var(--tab) + var(--sab) + 16px);width:56px;height:56px;background:linear-gradient(135deg,var(--g2),var(--g));color:#140e02;border:0;box-shadow:0 12px 34px rgba(212,175,106,.4)}
-#fab .ic{width:26px;height:26px}
-.party{bottom:calc(var(--tab) + var(--sab) + 16px);inset-inline-start:14px;width:46px;height:46px}
-#toasts{bottom:calc(var(--tab) + var(--sab) + 16px)}
-#demoBar{bottom:calc(var(--tab) + var(--sab) + 80px)}
+#tabbar a.on .ic{transform:translateY(-3px) scale(1.12);filter:drop-shadow(0 0 8px rgba(244,223,168,.6))}
+#tabbar a:after{content:"";position:absolute;bottom:7px;width:4px;height:4px;border-radius:50%;background:var(--g2);box-shadow:0 0 10px var(--g);opacity:0;transform:scale(0);transition:opacity .3s,transform .4s cubic-bezier(.3,1.6,.5,1)}
+#tabbar a.on:after{opacity:1;transform:scale(1)}
+#tabbar a.on span{opacity:0;transform:translateY(-6px)}
+.tab-add{position:relative;justify-self:center;width:64px;height:64px;margin-top:-30px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,var(--g2),var(--g) 60%,var(--g3));color:#140e02;border:5px solid #070604;box-shadow:0 12px 30px rgba(212,175,106,.5),inset 0 2px 0 rgba(255,255,255,.5);animation:addGlow 3.2s ease-in-out infinite;transition:transform .35s cubic-bezier(.3,1.6,.5,1)}
+.tab-add .ic{width:28px;height:28px;stroke-width:2.4;transition:transform .5s cubic-bezier(.3,1.6,.5,1)}
+.tab-add:active{transform:scale(.88)}
+.tab-add:active .ic{transform:rotate(90deg)}
+@keyframes addGlow{0%,100%{box-shadow:0 12px 30px rgba(212,175,106,.45),0 0 0 0 rgba(244,223,168,.35),inset 0 2px 0 rgba(255,255,255,.5)}50%{box-shadow:0 12px 34px rgba(212,175,106,.6),0 0 0 11px rgba(244,223,168,0),inset 0 2px 0 rgba(255,255,255,.5)}}
+.party{bottom:calc(var(--tab) + var(--sab) + 6px);inset-inline-start:14px;width:44px;height:44px}
+#toasts{bottom:calc(var(--tab) + var(--sab) + 6px)}
+#demoBar{bottom:calc(var(--tab) + var(--sab) + 60px)}
 
 /* ---------- الهيرو ---------- */
-.hero{margin-top:12px;min-height:calc(100svh - var(--tab) - var(--sab) - 110px);max-height:680px;border-radius:30px;padding:22px 20px 24px;align-items:flex-end}
-.hello{top:16px;inset-inline-start:16px}
-.wordmark{font-size:clamp(4.4rem,23vw,6.6rem);padding:.5em .1em .45em 0;margin:-.1em 0 -.1em}
-.sw-top{left:18%}.sw-bot{left:24%}
-.swash{width:1.3em}
-.hero p{font-size:.95rem;line-height:1.85}
-.hero-cta{width:100%;flex-direction:column}
-.hero-cta .btn{width:100%;padding:1em}
+.hero{margin-top:12px;min-height:min(640px,calc(100svh - var(--tab) - var(--sab) - 96px));border-radius:30px;padding:76px 18px 26px;align-items:flex-end;overflow:hidden}
+.hero:after{content:"";position:absolute;inset:-40% -60%;z-index:-1;background:linear-gradient(105deg,transparent 42%,rgba(244,223,168,.1) 50%,transparent 58%);animation:sheen 8s ease-in-out 1.5s infinite;pointer-events:none}
+@keyframes sheen{0%{transform:translateX(-40%)}60%,100%{transform:translateX(40%)}}
+.hello{top:16px;inset-inline-start:16px;animation:rise .8s var(--ease) .2s both}
+.hero-in{width:100%;min-width:0;max-width:100%;gap:14px}
+.hero-in>*{min-width:0;max-width:100%}
+.hero-in>.eyebrow{font-size:.56rem;letter-spacing:.16em;line-height:1.8;animation:rise .9s var(--ease) .15s both}
+.wordmark{font-size:clamp(2.7rem,12vw,5.2rem);padding:.55em .1em .5em 0;margin:-.15em 0 -.1em;max-width:100%}
+.sw-top{left:20%}.sw-bot{left:26%}
+.swash{width:1.25em}
+.hero p{font-size:.95rem;line-height:1.9;animation:rise .9s var(--ease) 1.1s both}
+.hero-cta{width:100%;flex-direction:column;gap:10px;animation:rise .9s var(--ease) 1.3s both}
+.hero-cta .btn{width:100%;padding:1em;font-size:1rem}
 .hero .tag{display:none}
-.cap-f{display:none}
+.hero .art .cap-f{display:block;opacity:.5}
+.hero .art .cap-f:nth-child(3),.hero .art .cap-f:nth-child(5){display:none}
+.hero .art .cap-f:nth-child(2){top:17%!important;width:34px!important;height:34px!important}
 
 /* ---------- Why ---------- */
 .why{gap:26px}
@@ -168,10 +183,24 @@ footer{padding:50px 10px 20px}
 .auth-art{min-height:0;padding:calc(34px + var(--sat)) 22px 18px;gap:14px;border-radius:0 0 34px 34px;background:#0c0a05}
 .auth-art .eyebrow{font-size:.58rem;letter-spacing:.2em}
 .auth-art>div:nth-child(3){display:none}
-.wm-auth{font-size:clamp(3.6rem,19vw,5rem)!important;margin-top:6px!important}
+.wm-auth{font-size:clamp(2.6rem,12.5vw,4.4rem)!important;margin-top:6px!important}
 .auth-form{padding:22px 18px calc(28px + var(--sab));justify-content:flex-start}
 .tabs button{padding:.85em .4em;font-size:.85rem}
 .auth-form .btn.primary{padding:1em}
 
 /* ---------- حركات أخف ---------- */
 .rv{transform:translateY(16px);transition-duration:.6s}
+
+/* ---------- الكريدت ---------- */
+.credit{margin-top:26px}
+.contact{width:100%;display:grid;grid-template-columns:1fr;gap:10px}
+.cbtn{justify-content:center;padding:1em;font-size:.95rem}
+footer{padding:44px 6px calc(24px + var(--sab))}
+footer h2{font-size:1.8rem}
+
+/* ---------- ظهور العناصر وهي بتتحرك مع السكرول ---------- */
+.rev{opacity:0;transform:translateY(34px) scale(.97);transition:opacity .75s var(--ease),transform .8s var(--ease);transition-delay:var(--rd,0s)}
+.rev.in{opacity:1;transform:none}
+.head h2,.head .eyebrow{will-change:transform}
+.btn,.crow,.row,.act{transition:transform .25s var(--ease),background .25s}
+.pin{animation:none!important}

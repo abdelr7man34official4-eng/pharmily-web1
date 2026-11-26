@@ -25,6 +25,24 @@
     });
   }, { passive: true });
 
+  /* الموبايل: العناصر بتظهر بحركة ناعمة وهي داخلة الشاشة (مرة واحدة لكل عنصر) */
+  if (matchMedia("(max-width:760px)").matches && !reduce && "IntersectionObserver" in window) {
+    const seen = new Set(), sel = ".mem,.st,.yr,.mc,.pk .lead,.feat,.stat,.step,.fm,.panel,.head";
+    const io = new IntersectionObserver(es => es.forEach(x => { if (x.isIntersecting) { x.target.classList.add("in"); io.unobserve(x.target); } }), { threshold: .06, rootMargin: "0px 0px -5% 0px" });
+    const keyOf = el => el.dataset.v || el.dataset.yr || el.querySelector(".pic")?.dataset.v || el.id || (el.className + el.textContent.slice(0, 24));
+    let batch = 0;
+    const prep = el => {
+      if (el.classList.contains("rev") || el.classList.contains("rv")) return;
+      const k = keyOf(el); if (seen.has(k)) return; seen.add(k);
+      el.classList.add("rev"); el.style.setProperty("--rd", (Math.min(batch++, 8) * 0.06).toFixed(2) + "s"); io.observe(el);
+    };
+    const scan = root => { batch = 0; (root.matches?.(sel) ? [root] : []).concat([...root.querySelectorAll?.(sel) || []]).forEach(prep); };
+    const mo = new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(n => n.nodeType === 1 && scan(n))));
+    ["mgrid", "grid", "pk", "rail", "stepsBox"].forEach(id => { const c = $(id); if (c) mo.observe(c, { childList: true }); });
+    document.querySelectorAll("#app main").forEach(scan);
+    addEventListener("pointerdown", e => { const b = e.target.closest(".btn,.act,.crow"); if (b) navigator.vibrate?.(6); }, { passive: true });
+  }
+
   if (!fine || reduce) return;
 
   const glow = $("glow"), ring = $("ring");

@@ -531,7 +531,7 @@ footer p{font-size:.72rem;letter-spacing:.25em}
 
 .step{animation:pop .6s var(--ease) both}
 .steps{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
-.mob-only,.sbtn,#tabbar,#fab{display:none}
+.mob-only,.sbtn,#tabbar{display:none}
 /* =================== تأثيرات تفاعلية =================== */
 #prog{position:fixed;top:0;left:0;height:3px;width:100%;z-index:300;background:linear-gradient(90deg,var(--g3),var(--g2));transform-origin:left;transform:scaleX(0);pointer-events:none}
 #glow,#ring{display:none;position:fixed;top:0;left:0;pointer-events:none}
@@ -549,3 +549,19 @@ footer p{font-size:.72rem;letter-spacing:.25em}
 .head h2 em{background:linear-gradient(100deg,var(--g3),var(--g2),var(--g3));background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;opacity:1;animation:shimmer 6s linear infinite;font-family:var(--wm);font-weight:400;font-size:1.08em;letter-spacing:0}
 footer h2 em{font-family:var(--wm);font-weight:400}
 @media (prefers-reduced-motion:reduce){.ch,.wordmark sup{opacity:1!important;translate:none!important}.swash path{stroke-dashoffset:0!important}}
+
+/* ---------- الكريدت وأزرار التواصل ---------- */
+.credit{margin-top:34px;padding-top:26px;border-top:1px solid var(--line);display:grid;justify-items:center;gap:10px}
+.by-line{display:flex;gap:.6em;align-items:baseline;flex-wrap:wrap;justify-content:center;font-size:.85rem;color:var(--g3)}
+.by-line i{font-style:normal;color:#ff6680}
+.by-line b{font-family:var(--wm);font-weight:400;font-size:1.7rem;letter-spacing:.01em;background:linear-gradient(180deg,var(--g2),var(--g));-webkit-background-clip:text;background-clip:text;color:transparent}
+.credit .ask{font-size:.85rem;opacity:.75;text-align:center;color:var(--g)}
+.contact{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:4px}
+.cbtn{--b:var(--g);display:inline-flex;align-items:center;gap:.6em;padding:.7em 1.3em;border-radius:99px;border:1px solid var(--line2);background:rgba(212,175,106,.07);color:var(--g2);font-size:.88rem;font-weight:500;letter-spacing:0;transition:transform var(--t) var(--ease),background var(--t),color var(--t),border-color var(--t),box-shadow var(--t)}
+.cbtn .ic{width:1.35em;height:1.35em;color:var(--b)}
+.cbtn:hover{background:var(--b);color:#fff;border-color:transparent;transform:translateY(-3px);box-shadow:0 14px 34px rgba(0,0,0,.5)}
+.cbtn:hover .ic{color:#fff;transform:scale(1.12) rotate(-6deg)}
+.cbtn:active{transform:scale(.96)}
+.cbtn.wa{--b:#25d366}.cbtn.ig{--b:#e4407b}.cbtn.fb{--b:#1877f2}
+.cbtn.ig:hover{background:linear-gradient(45deg,#f9a03f,#e4407b 55%,#8a3ab9)}
+footer p{letter-spacing:.25em}.credit p.ask{letter-spacing:0;font-size:.85rem}
