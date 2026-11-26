@@ -193,8 +193,8 @@ footer{padding:50px 10px 20px}
 
 /* ---------- الكريدت ---------- */
 .credit{margin-top:26px}
-.contact{width:100%;display:grid;grid-template-columns:1fr;gap:10px}
-.cbtn{justify-content:center;padding:1em;font-size:.95rem}
+.contact{display:flex;justify-content:center;gap:12px}
+.cbtn{width:44px;height:44px;padding:0}
 footer{padding:44px 6px calc(24px + var(--sab))}
 footer h2{font-size:1.8rem}
 
