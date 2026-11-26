@@ -851,7 +851,13 @@ $("sbtn").onclick = () => { const n = $("nav"); n.classList.toggle("searching");
 let inited = false;
 function initStatic() {
   if (inited) return; inited = true;
-  $("lt").textContent = LETTER; $("fy").textContent = FUTURE_YEARS;
+  {
+    const lt = $("lt"); lt.textContent = "";
+    (Array.isArray(LETTER) ? LETTER : [LETTER]).forEach(t => { const p = document.createElement("p"); p.textContent = t; lt.appendChild(p); });
+    if (typeof LETTER_SIGN === "string" && LETTER_SIGN) { const s = document.createElement("p"); s.className = "sign"; s.textContent = LETTER_SIGN; lt.appendChild(s); }
+    const tg = $("ltToggle");
+    if (tg) tg.onclick = () => { const open = lt.classList.toggle("open"); tg.textContent = open ? "إخفاء الرسالة ▲" : "اقرأ الرسالة كاملة ▼"; if (!open) lt.scrollIntoView({block:"nearest"}); };
+  } $("fy").textContent = FUTURE_YEARS;
   $("mq").textContent = ("FIRST LECTURES · WHITE COATS · LATE-NIGHT LABS · EXAM SEASONS · LIFELONG FRIENDS · ONE FAMILY · ").repeat(6);
 
   // غلاف اختياري

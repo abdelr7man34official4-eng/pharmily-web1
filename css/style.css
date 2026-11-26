@@ -218,6 +218,12 @@ section{padding:clamp(54px,8vw,92px) 0 0}
 .why{display:grid;grid-template-columns:1.1fr 1fr;gap:clamp(24px,4vw,56px);align-items:center}
 .why h2{font-size:clamp(1.8rem,4.2vw,2.8rem);margin-bottom:18px}
 .why .letter{font-size:1.02rem;line-height:2;opacity:.9;max-width:540px;margin-bottom:30px}
+.why .letter{position:relative;max-height:11.5em;overflow:hidden;white-space:pre-line;margin-bottom:10px;-webkit-mask-image:linear-gradient(#000 70%,transparent);mask-image:linear-gradient(#000 70%,transparent)}
+.why .letter p{margin:0 0 .9em}
+.why .letter .sign{margin-top:1.2em;opacity:.8;font-size:.9rem;direction:ltr;text-align:left;font-family:var(--display)}
+.why .letter.open{max-height:none;-webkit-mask-image:none;mask-image:none}
+.ltoggle{background:none;border:1px solid var(--line2);color:var(--g2);padding:.5em 1.2em;border-radius:99px;cursor:pointer;font:inherit;font-size:.85rem;margin-bottom:28px}
+.ltoggle:hover{background:rgba(var(--ga),.12)}
 .stats3{display:flex;gap:clamp(14px,3vw,34px);flex-wrap:wrap}
 .stat{display:grid;justify-items:center;gap:6px;text-align:center;min-width:92px}
 .stat .av{--sz:54px;color:var(--g2)}
