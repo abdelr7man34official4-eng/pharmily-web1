@@ -2,13 +2,14 @@
 <html lang="ar">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#030302">
 <title>PHARMILY · Class 16</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@300;400;500;600&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,500;0,6..96,700;1,6..96,500;1,6..96,700&family=Readex+Pro:wght@300;400;500;600&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/v2.css">
 </head>
 <body>
 
@@ -45,7 +46,10 @@
 <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M4 16v3.5A1.5 1.5 0 0 0 5.5 21h13a1.5 1.5 0 0 0 1.5-1.5V16"/></symbol>
 <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
 <symbol id="i-party" viewBox="0 0 24 24"><path d="M4 21 8.5 8.5l7 7z"/><path d="M12 5.5c.6-1.2.6-2.2 0-3"/><path d="M17 11c1.2-.4 2.4-.2 3.2.5"/><path d="M13.5 9.5l1-1M18 15.5c1.6.3 2.6 1 3 2"/><circle cx="19" cy="5" r=".6"/><circle cx="6" cy="4" r=".6"/></symbol>
+<symbol id="i-thumb" viewBox="0 0 24 24"><path d="M7 11v9H4v-9z"/><path d="M7 11l4-7c1.6 0 2.5 1.2 2.2 2.7L12.7 9H19a2 2 0 0 1 2 2.4l-1.4 6.8A2 2 0 0 1 17.6 20H7"/></symbol>
+<symbol id="i-spark4" viewBox="0 0 24 24"><path d="M12 0c.6 6.4 5.6 11.4 12 12-6.4.6-11.4 5.6-12 12-.6-6.4-5.6-11.4-12-12C6.4 11.4 11.4 6.4 12 0z" fill="currentColor" stroke="none"/></symbol>
 <symbol id="i-loader" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9"/></symbol>
+<linearGradient id="goldG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff1c2"/><stop offset=".55" stop-color="#d4af6a"/><stop offset="1" stop-color="#8a6d2f"/></linearGradient>
 </defs></svg>
 
 <script>
@@ -76,7 +80,7 @@
       </svg>
       <div>
         <div class="eyebrow">Faculty of Pharmacy · Zagazig University</div>
-        <h1 style="margin-top:18px">PHARMILY<sup>16</sup></h1>
+        <h1 class="wordmark sm" style="margin-top:18px" data-wm>Pharmily<sup>16</sup></h1>
         <ul>
           <li><svg class="ic"><use href="#i-shield"/></svg><span class="ar">مخصوص لدفعتنا بس</span></li>
           <li><svg class="ic"><use href="#i-message"/></svg><span class="ar">ابعت رسالة لأي زميل</span></li>
@@ -102,9 +106,11 @@
         <div class="field sg"><label for="regName">Name · الاسم زي الشيت (بالإنجليزي)</label>
           <input id="regName" placeholder="Your name" autocomplete="off"><div class="list" hidden></div></div>
         <div class="field"><label for="regCode">Class code · كود الدفعة</label>
-          <div class="pw"><input id="regCode" type="password" placeholder="••••••••" autocomplete="off"><button type="button" data-eye aria-label="Show"><svg class="ic"><use href="#i-eye"/></svg></button></div></div>
+          <div class="pw"><input id="regCode" type="password" placeholder="••••••••" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"><button type="button" data-eye aria-label="Show"><svg class="ic"><use href="#i-eye"/></svg></button></div></div>
         <div class="field"><label for="regPass">Password · اختار باسورد خاص بيك</label>
-          <div class="pw"><input id="regPass" type="password" placeholder="6 characters min" autocomplete="new-password"><button type="button" data-eye aria-label="Show"><svg class="ic"><use href="#i-eye"/></svg></button></div></div>
+          <div class="pw"><input id="regPass" type="password" placeholder="6 characters min" autocomplete="new-password" autocapitalize="off" autocorrect="off" spellcheck="false"><button type="button" data-eye aria-label="Show"><svg class="ic"><use href="#i-eye"/></svg></button></div></div>
+        <div class="field"><label for="regPass2">Confirm password · أكّد الباسورد</label>
+          <div class="pw"><input id="regPass2" type="password" placeholder="Repeat password" autocomplete="new-password" autocapitalize="off" autocorrect="off" spellcheck="false"><button type="button" data-eye aria-label="Show"><svg class="ic"><use href="#i-eye"/></svg></button></div></div>
         <label class="switch"><input id="regRemember" type="checkbox" checked><span class="tr"></span><span>تذكرني · Remember me</span></label>
         <div class="err ar" id="regErr"></div>
         <button class="btn primary full" type="submit"><span>Create my profile</span><svg class="ic"><use href="#i-arrow-r"/></svg></button>
@@ -114,8 +120,9 @@
         <div class="field sg"><label for="logName">Name · الاسم</label>
           <input id="logName" placeholder="Your name" autocomplete="username"><div class="list" hidden></div></div>
         <div class="field"><label for="logPass">Password · الباسورد</label>
-          <div class="pw"><input id="logPass" type="password" placeholder="••••••••" autocomplete="current-password"><button type="button" data-eye aria-label="Show"><svg class="ic"><use href="#i-eye"/></svg></button></div></div>
+          <div class="pw"><input id="logPass" type="password" placeholder="••••••••" autocomplete="current-password" autocapitalize="off" autocorrect="off" spellcheck="false"><button type="button" data-eye aria-label="Show"><svg class="ic"><use href="#i-eye"/></svg></button></div></div>
         <label class="switch"><input id="logRemember" type="checkbox" checked><span class="tr"></span><span>تذكرني · Remember me</span></label>
+        <button type="button" class="linkbtn ar" id="forgot">نسيت الباسورد؟ · مش عارفة أدخل؟</button>
         <div class="err ar" id="logErr"></div>
         <button class="btn primary full" type="submit"><span>Enter</span><svg class="ic"><use href="#i-arrow-r"/></svg></button>
       </form>
@@ -133,8 +140,9 @@
       <a href="#home">Home</a><a href="#memories">Memories</a><a href="#meet">Pharmily</a><a href="#journey">Journey</a><a href="#future">Future Me</a>
     </nav>
     <span class="sp"></span>
+    <button class="circle sbtn" id="sBtn" aria-label="Search"><svg class="ic"><use href="#i-search"/></svg></button>
     <div class="search"><svg class="ic"><use href="#i-search"/></svg><input id="gs" placeholder="Search a classmate…" autocomplete="off"><div class="pop" id="gsPop" hidden></div></div>
-    <button class="circle msgbtn" id="msgBtn" data-act="chat" aria-label="Messages"><svg class="ic"><use href="#i-message"/></svg><span class="badge" id="msgBadge" hidden>0</span></button>
+    <button class="circle msgbtn" id="msgBtn" data-act="chat" aria-label="Messages"><svg class="ic"><use href="#i-message"/></svg><span class="badge msgBadge" id="msgBadge" hidden>0</span></button>
     <div style="position:relative">
       <button class="me" id="meBtn" aria-label="Account"><span id="meAv"></span><span class="n" id="meName"></span></button>
       <div class="pop menu" id="menu" hidden>
@@ -142,9 +150,7 @@
         <button class="row" data-act="edit"><svg class="ic"><use href="#i-edit"/></svg>Edit profile</button>
         <button class="row" data-act="chat"><svg class="ic"><use href="#i-message"/></svg>Messages</button>
         <hr>
-        <div class="zoom"><span>Text size</span><button class="btn sm" id="zm">A−</button><button class="btn sm" id="zp">A+</button></div>
-        <hr>
-        <button class="row" data-act="logout"><svg class="ic"><use href="#i-logout"/></svg>Sign out</button>
+                <button class="row" data-act="logout"><svg class="ic"><use href="#i-logout"/></svg>Sign out</button>
       </div>
     </div>
     <button class="circle burger" id="burger" aria-label="Menu"><svg class="ic"><use href="#i-menu"/></svg></button>
@@ -176,7 +182,8 @@
         <span class="chip hello" id="hello"></span>
         <div class="hero-in">
           <div class="eyebrow">Faculty of Pharmacy · Zagazig University</div>
-          <h1 class="wordmark">PHARMILY<sup>16</sup></h1>
+          <h1 class="wordmark" data-wm aria-label="Pharmily 16">Pharmily<sup>16</sup></h1>
+          <svg class="swirl" viewBox="0 0 420 36" aria-hidden="true"><path d="M4 22C60 6 100 34 150 20S210 4 210 18 250 34 300 20 360 6 416 22" fill="none" stroke="url(#goldG)" stroke-width="1.6" stroke-linecap="round" pathLength="1"/><use href="#i-spark4" x="198" y="8" width="24" height="24" class="sp"/></svg>
           <p class="ar">لسه أول الحكاية… هنا كل زمايلك في مكان واحد: بروفايلات، رسايل، وذكريات عمرنا كله.</p>
           <div class="hero-cta">
             <button class="btn primary" data-act="share"><svg class="ic"><use href="#i-camera"/></svg>Share a memory</button>
@@ -247,13 +254,9 @@
     </section>
 
     <!-- STEPS -->
-    <section id="steps">
-      <div class="head rv"><div><div class="eyebrow">Get started</div><h2>Pharmily is easy as <em>1-2-3</em></h2></div></div>
-      <div class="steps">
-        <button class="step lift rv" data-act="edit" style="--d:.05s"><span class="n">1</span><span class="av"><svg class="ic"><use href="#i-user"/></svg></span><h3 class="ar">كمّل بروفايلك</h3><p class="ar">حط صورتك ولقبك ونبذة عنك.</p></button>
-        <button class="step lift rv" data-act="share" style="--d:.15s"><span class="n">2</span><span class="av"><svg class="ic"><use href="#i-camera"/></svg></span><h3 class="ar">شارك ذكرى</h3><p class="ar">صورة + كابشن، واسمك بيظهر تحتها.</p></button>
-        <button class="step lift rv" data-act="chat" style="--d:.25s"><span class="n">3</span><span class="av"><svg class="ic"><use href="#i-message"/></svg></span><h3 class="ar">قول Hi لزميل</h3><p class="ar">ابعت رسالة من الشات لأي حد سجّل.</p></button>
-      </div>
+    <section id="steps" hidden>
+      <div class="head rv"><div><div class="eyebrow">Get started</div><h2>Pharmily is easy as <em>1-2-3</em></h2></div><p class="ar">كل خطوة بتخلصها بتختفي. لما تخلص الكل القسم ده كله بيختفي. ✨</p></div>
+      <div class="steps" id="stepGrid"></div>
     </section>
 
     <!-- FUTURE -->
@@ -282,6 +285,14 @@
   </div>
 </aside>
 
+<nav class="tabbar" id="tabbar" hidden aria-label="Main">
+  <a href="#home"><svg class="ic"><use href="#i-home"/></svg><span>Home</span></a>
+  <a href="#memories"><svg class="ic"><use href="#i-image"/></svg><span>Memories</span></a>
+  <button class="tb-plus" data-act="share" aria-label="Share a memory"><svg class="ic"><use href="#i-plus"/></svg></button>
+  <a href="#meet"><svg class="ic"><use href="#i-users"/></svg><span>Pharmily</span></a>
+  <button data-act="chat" class="tb-chat" aria-label="Messages"><svg class="ic"><use href="#i-message"/></svg><span>Chat</span><i class="badge msgBadge" hidden>0</i></button>
+</nav>
+<div id="progress" aria-hidden="true"></div><div id="glow" aria-hidden="true"></div>
 <canvas id="confetti" aria-hidden="true"></canvas>
 <button id="partyBtn" class="circle party" aria-pressed="false" title="Celebrate · احتفال" aria-label="Celebrate" hidden><svg class="ic"><use href="#i-party"/></svg></button>
 <div id="toasts"></div>
@@ -294,6 +305,8 @@
 <script src="js/firebase-config.js"></script>
 <script src="js/backend.js"></script>
 <script src="js/app.js"></script>
+<script src="js/posts.js"></script>
+<script src="js/fx.js"></script>
 <script src="js/confetti.js"></script>
 </body>
 </html>
