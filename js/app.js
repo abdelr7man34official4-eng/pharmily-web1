@@ -858,7 +858,7 @@ function initStatic() {
     const tg = $("ltToggle");
     if (tg) tg.onclick = () => { const open = lt.classList.toggle("open"); tg.textContent = open ? "إخفاء الرسالة ▲" : "اقرأ الرسالة كاملة ▼"; if (!open) lt.scrollIntoView({block:"nearest"}); };
   } $("fy").textContent = FUTURE_YEARS;
-  $("mq").textContent = ("FIRST LECTURES · WHITE COATS · LATE-NIGHT LABS · EXAM SEASONS · LIFELONG FRIENDS · ONE FAMILY · ").repeat(6);
+  $("mq").textContent = ("PHARMILY · 16 · CLINICAL PHARMACY · ZAGAZIG UNIVERSITY · ").repeat(10);
 
   // غلاف اختياري
   if (typeof HERO_PHOTO === "string" && HERO_PHOTO) {
