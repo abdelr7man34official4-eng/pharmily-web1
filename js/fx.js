@@ -92,3 +92,31 @@
   document.documentElement.addEventListener("mouseleave", () => document.body.classList.remove("mv"));
   document.documentElement.addEventListener("mouseenter", () => moved && document.body.classList.add("mv"));
 })();
+
+/* =========================================================
+   تبديل الثيم (فاتح / داكن) بحركة دايرة بتتوسع من الزرار
+   ========================================================= */
+(() => {
+  const root = document.documentElement, meta = document.querySelector('meta[name="theme-color"]');
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const apply = t => {
+    root.dataset.theme = t; meta && (meta.content = t === "light" ? "#f4f1eb" : "#030302");
+    try { localStorage.setItem("ph_theme", t); } catch { }
+  };
+  apply(root.dataset.theme === "dark" ? "dark" : "light");
+  async function toggle(btn) {
+    const next = root.dataset.theme === "light" ? "dark" : "light";
+    if (!document.startViewTransition || reduce) {   // متصفح قديم: تغيير ناعم بسيط
+      root.classList.add("theme-fade"); apply(next); setTimeout(() => root.classList.remove("theme-fade"), 500); return;
+    }
+    const r = btn.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2;
+    const end = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+    const vt = document.startViewTransition(() => apply(next));
+    try {
+      await vt.ready;
+      root.animate({ clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${end}px at ${x}px ${y}px)`] },
+        { duration: 700, easing: "cubic-bezier(.4,0,.2,1)", pseudoElement: "::view-transition-new(root)" });
+    } catch { }
+  }
+  document.addEventListener("click", e => { const b = e.target.closest(".themebtn"); if (b) toggle(b); });
+})();

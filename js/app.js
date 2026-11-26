@@ -499,7 +499,7 @@ function openReactors(id) {
   draw("all");
 }
 function memMenu(id) {
-  const m = modal(`<h3>Options</h3><div class="optlist"><button class="btn full" data-ed>${ic("edit")}Edit caption · تعديل الكابشن</button><button class="btn full" data-del style="color:#ffb8a8">${ic("trash")}Delete · مسح الذكرى</button></div>`);
+  const m = modal(`<h3>Options</h3><div class="optlist"><button class="btn full" data-ed>${ic("edit")}Edit caption · تعديل الكابشن</button><button class="btn full" data-del style="color:var(--danger)">${ic("trash")}Delete · مسح الذكرى</button></div>`);
   m.querySelector("[data-ed]").onclick = () => { m.close(); openMemory(id, { edit: true }); };
   m.querySelector("[data-del]").onclick = () => { m.close(); deleteMemory(id); };
 }
@@ -751,7 +751,7 @@ function renderThread(stick) {
     box._cur = current;
     box.innerHTML = `<div class="cth-h"><button class="circle back" id="cBack" aria-label="Back">${ic("arrow-l")}</button><span id="cav"></span><span class="who"><b id="cnm"></b><small id="cnk"></small></span><button class="circle" data-act="profile" data-v="${esc(o.key)}" aria-label="Profile">${ic("user")}</button></div>
       <div class="msgs" id="msgs"></div>
-      <form class="comp" id="comp"><textarea id="ctx" rows="1" dir="auto" maxlength="1000" placeholder="Write a message…"></textarea><button class="circle" style="background:var(--g);color:#000" aria-label="Send">${ic("send")}</button></form>`;
+      <form class="comp" id="comp"><textarea id="ctx" rows="1" dir="auto" maxlength="1000" placeholder="Write a message…"></textarea><button class="circle" style="background:var(--g);color:var(--onacc)" aria-label="Send">${ic("send")}</button></form>`;
     $("cBack").onclick = () => { current = null; $("cbox").classList.remove("thread"); renderChatList(); };
     $("comp").onsubmit = sendMsg;
     $("ctx").onkeydown = e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMsg(e); } };

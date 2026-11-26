@@ -6,7 +6,8 @@
   const btn = document.getElementById("partyBtn"), cv = document.getElementById("confetti");
   if (!btn || !cv) return;
   const ctx = cv.getContext("2d");
-  const COLORS = ["#f4dfa8", "#d4af6a", "#ffffff", "#8a6d2f", "#ffd978", "#e8c27a", "#fff2cc"];
+  const GOLD = ["#f4dfa8", "#d4af6a", "#ffffff", "#8a6d2f", "#ffd978", "#e8c27a", "#fff2cc"], ROSE = ["#72202e", "#1f2130", "#b0505f", "#d98a96", "#e8c27a", "#3a3d58", "#a8374a"];
+  const palette = () => document.documentElement.dataset.theme === "light" ? ROSE : GOLD;
   let W = 0, H = 0, dpr = 1, parts = [], on = false, raf = 0, last = 0, fade = 1, spawnAcc = 0;
 
   function resize() {
@@ -23,7 +24,7 @@
       vx: rnd(-.6, .6), vy: rnd(1.6, 4.2), g: rnd(.01, .035),
       w: kind < .25 ? rnd(3, 5) : rnd(6, 12), h: kind < .25 ? rnd(18, 34) : rnd(8, 16),   // الأول شرايط طويلة (streamers)
       r: rnd(0, 6.28), vr: rnd(-.12, .12), flip: rnd(0, 6.28), vf: rnd(.04, .14),
-      sway: rnd(.4, 1.6), ph: rnd(0, 6.28), c: COLORS[(Math.random() * COLORS.length) | 0],
+      sway: rnd(.4, 1.6), ph: rnd(0, 6.28), c: palette()[(Math.random() * palette().length) | 0],
       round: kind > .8
     };
   }
