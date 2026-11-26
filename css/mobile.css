@@ -1,0 +1,177 @@
+/* =========================================================
+   mobile.css — نسخة الموبايل (شاشات أصغر من 760px)
+   تصميم مختلف عن الكمبيوتر: شريط تنقل سفلي، شيتات بتطلع من تحت، فيد للذكريات، شات بملء الشاشة
+   ========================================================= */
+:root{--tab:64px;--sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:calc(70px + var(--sat))}
+body{padding-bottom:calc(var(--tab) + var(--sab) + 14px);-webkit-tap-highlight-color:transparent;overscroll-behavior-y:none}
+input,textarea{font-size:16px!important}
+button,a,.btn{touch-action:manipulation}
+.lift:hover,.tilt.lift:hover{transform:none;box-shadow:none}
+.btn:hover,.circle:hover{transform:none}
+.btn:active,.circle:active,.lift:active{transform:scale(.97)}
+.mob-only{display:flex}
+#glow,#ring{display:none!important}
+
+/* ---------- الهيكل: ملء الشاشة بدل الإطار ---------- */
+.shell{width:100%;margin:0;border:0;border-radius:0;background:transparent;box-shadow:none;padding:0 14px 10px}
+section{padding-top:38px}
+.head{margin-bottom:18px;gap:12px}
+.head h2{font-size:clamp(1.9rem,9vw,2.6rem)}
+.head p{font-size:.88rem;max-width:none}
+
+/* ---------- الشريط العلوي ---------- */
+.nav{position:sticky;top:0;margin:0 -14px;border-radius:0;border:0;border-bottom:1px solid var(--line);padding:calc(8px + var(--sat)) 14px 8px;gap:8px;background:rgba(8,7,5,.82);box-shadow:none}
+.logo{font-family:var(--wm);font-weight:400;letter-spacing:.02em;font-size:1.7rem;margin:0;text-transform:none}
+.logo .ic{width:1.1em;height:1.1em}
+.links,.burger{display:none!important}
+.sbtn{display:inline-grid}
+.circle{width:44px;height:44px}
+.me{padding:2px}.me span.n{display:none}.me .av{--sz:40px}
+.search{display:none;position:absolute;inset:calc(var(--sat) + 4px) 8px auto 8px;width:auto;z-index:5}
+.nav.searching .search{display:block;animation:pop .25s var(--ease)}
+.nav.searching .search input{padding-block:.9em;background:#14110a;border-color:var(--g)}
+.search .pop{min-width:0}
+.menu{min-width:250px;border-radius:24px}
+.pop .row{padding:.9em 1em;font-size:1rem}
+
+/* ---------- شريط التبويبات السفلي ---------- */
+#tabbar{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;z-index:60;inset:auto 0 0 0;padding:6px 6px calc(6px + var(--sab));background:rgba(10,9,6,.88);backdrop-filter:blur(22px) saturate(160%);-webkit-backdrop-filter:blur(22px) saturate(160%);border-top:1px solid var(--line2)}
+#tabbar a{display:grid;justify-items:center;gap:2px;padding:7px 0 5px;font-size:.62rem;letter-spacing:.02em;color:var(--g3);border-radius:16px;position:relative;transition:color .25s}
+#tabbar a .ic{width:24px;height:24px}
+#tabbar a.on{color:var(--g2)}
+#tabbar a.on:before{content:"";position:absolute;top:-7px;width:26px;height:3px;border-radius:0 0 4px 4px;background:var(--g2);box-shadow:0 2px 12px var(--g)}
+#tabbar a.on .ic{transform:translateY(-1px) scale(1.1)}
+#fab{display:grid;position:fixed;z-index:61;inset-inline-end:16px;bottom:calc(var(--tab) + var(--sab) + 16px);width:56px;height:56px;background:linear-gradient(135deg,var(--g2),var(--g));color:#140e02;border:0;box-shadow:0 12px 34px rgba(212,175,106,.4)}
+#fab .ic{width:26px;height:26px}
+.party{bottom:calc(var(--tab) + var(--sab) + 16px);inset-inline-start:14px;width:46px;height:46px}
+#toasts{bottom:calc(var(--tab) + var(--sab) + 16px)}
+#demoBar{bottom:calc(var(--tab) + var(--sab) + 80px)}
+
+/* ---------- الهيرو ---------- */
+.hero{margin-top:12px;min-height:calc(100svh - var(--tab) - var(--sab) - 110px);max-height:680px;border-radius:30px;padding:22px 20px 24px;align-items:flex-end}
+.hello{top:16px;inset-inline-start:16px}
+.wordmark{font-size:clamp(4.4rem,23vw,6.6rem);padding:.5em .1em .45em 0;margin:-.1em 0 -.1em}
+.sw-top{left:18%}.sw-bot{left:24%}
+.swash{width:1.3em}
+.hero p{font-size:.95rem;line-height:1.85}
+.hero-cta{width:100%;flex-direction:column}
+.hero-cta .btn{width:100%;padding:1em}
+.hero .tag{display:none}
+.cap-f{display:none}
+
+/* ---------- Why ---------- */
+.why{gap:26px}
+.why h2{font-size:1.9rem}
+.why .letter{font-size:.98rem;margin-bottom:22px}
+.stats3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{min-width:0;padding:14px 4px;border-radius:20px;border:1px solid var(--line);background:var(--panel)}
+.stat .av{--sz:44px}
+.feats{grid-auto-flow:column;grid-auto-columns:82%;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;margin:0 -14px;padding:2px 14px 6px;gap:12px}
+.feats::-webkit-scrollbar{display:none}
+.feat{scroll-snap-align:center;padding:12px}
+.feat .tile{width:62px;height:62px;border-radius:16px}
+.mq{margin-top:36px}
+
+/* ---------- آخر الذكريات (كاروسيل) ---------- */
+.panel{padding:16px;border-radius:26px}
+.rail{margin:0 -16px;padding:4px 16px 10px;gap:12px}
+.mc{flex:0 0 64%;border-radius:20px}
+.arrows{display:none}
+.panel-foot{justify-content:center}
+.panel-foot .btn{width:100%}
+
+/* ---------- الذكريات: فيد زي تطبيقات التواصل ---------- */
+.mgrid{grid-template-columns:1fr;gap:14px;margin:0 -4px}
+.mem{padding:12px 12px 6px;border-radius:24px}
+.mem .pic{aspect-ratio:1/1;border-radius:18px;cursor:pointer}
+.mem:hover .pic img{transform:none}
+.act{padding:.85em .4em;font-size:.92rem}
+.rxs{padding:6px 8px 6px 4px}
+.stats{min-height:30px;font-size:.85rem}
+.empty-box{padding:40px 16px}
+
+/* ---------- زملاء الدفعة: 3 في الصف ---------- */
+.tools{gap:8px;position:sticky;top:calc(58px + var(--sat));z-index:20;padding:8px 0;margin-bottom:12px;background:linear-gradient(var(--bg) 70%,transparent)}
+.tools .search-in{min-width:0;flex:1 1 100%}
+.grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.st{padding:7px;border-radius:20px}
+.st .av{border-radius:15px;font-size:1.3rem}
+.st b{font-size:.72rem;margin-top:7px;overflow-wrap:anywhere}
+.st i{font-size:.64rem;min-height:1.2em}
+.pages{justify-content:flex-start;flex-wrap:nowrap;overflow-x:auto;padding-bottom:6px;scrollbar-width:none}
+.pages::-webkit-scrollbar{display:none}
+.pages .btn{flex:none;min-width:42px}
+
+/* ---------- Journey: كاروسيل أفقي ---------- */
+.pk{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 -14px;padding:2px 14px 10px;scrollbar-width:none}
+.pk::-webkit-scrollbar{display:none}
+.pk .lead{flex:0 0 88%;grid-column:auto;scroll-snap-align:center;flex-direction:column;align-items:flex-start;border-radius:28px}
+.pk .lead .ic.lg{display:none}
+.yr{flex:0 0 74%;min-height:300px;scroll-snap-align:center;border-radius:28px}
+.yr .big{font-size:6rem}
+
+/* ---------- Steps ---------- */
+.steps{grid-template-columns:1fr;gap:10px}
+.step{grid-template-columns:auto 1fr;column-gap:14px;align-items:center;padding:14px 16px;border-radius:22px}
+.step .av{grid-row:1/3;--sz:48px}
+.step h3,.step p{margin:0}
+.step .n{font-size:3rem}
+
+/* ---------- Future me / footer ---------- */
+.fm{padding:16px;border-radius:26px}
+footer{padding:50px 10px 20px}
+
+/* ---------- الشيتات: بتطلع من تحت ---------- */
+.modal{place-items:end stretch;padding:0;align-items:end}
+.sheet,.sheet.wide{width:100%;max-height:92dvh;border-radius:30px 30px 0 0;border-width:1px 0 0;padding:26px 18px calc(22px + var(--sab));transform:translateY(100%);transition:transform .42s var(--ease)}
+.modal.in .sheet{transform:none}
+.sheet:before{content:"";position:absolute;top:9px;left:50%;translate:-50% 0;width:44px;height:5px;border-radius:9px;background:rgba(212,175,106,.35)}
+.sheet>.x{top:12px}
+.pf-top{padding-top:8px;gap:14px}
+.pf-top .av{--sz:84px;border-radius:26px}
+.pf-top h3{font-size:1.4rem}
+.pf-act .btn{flex:1}
+.mini{grid-template-columns:repeat(3,1fr)}
+.ph{grid-template-columns:repeat(2,1fr)}
+
+/* ---------- عارض الذكرى: شاشة كاملة ---------- */
+.pv{padding:0;display:block;background:var(--bg)}
+.pv>.x{position:fixed;top:calc(10px + var(--sat));background:rgba(0,0,0,.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.pv-in{display:flex;flex-direction:column;width:100%;height:100%;border-radius:0;border:0;overflow-y:auto;transform:translateY(40px);box-shadow:none}
+.pv.in .pv-in{transform:none}
+.pv-img{flex:none;height:auto;max-height:58dvh}
+.pv-img img{width:100%;max-height:58dvh}
+.pv-side{display:block;border:0;overflow:visible}
+.pv-list{overflow:visible;padding:6px 14px 90px}
+.pv-comp{position:fixed;inset:auto 0 0 0;z-index:3;background:rgba(10,9,6,.95);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+.pv-top{padding:14px 14px 6px}
+
+/* ---------- صينية الرياكتات ---------- */
+#rtray{padding:5px 6px}
+#rtray button{width:42px;height:42px}
+#rtray button .rx{width:34px;height:34px}
+#rtray button:active .rx{transform:translateY(-12px) scale(1.5)}
+
+/* ---------- الشات: ملء الشاشة ---------- */
+#chat{background:var(--shell)}
+.cbox{width:100%;height:100dvh;transform:none;border:0}
+.chd{padding:calc(14px + var(--sat)) 14px 10px}
+.cth-h{padding:calc(10px + var(--sat)) 12px 10px}
+.comp{padding:10px 12px calc(12px + var(--sab))}
+.crow{padding:.8em .7em}
+.bub{max-width:86%;font-size:.96rem}
+
+/* ---------- التسجيل / الدخول ---------- */
+#auth{padding:0;place-items:stretch;background:var(--bg)}
+.auth-card{border-radius:0;border:0;min-height:100dvh;box-shadow:none;grid-template-rows:auto 1fr;background:transparent}
+.auth-art{min-height:0;padding:calc(34px + var(--sat)) 22px 18px;gap:14px;border-radius:0 0 34px 34px;background:#0c0a05}
+.auth-art .eyebrow{font-size:.58rem;letter-spacing:.2em}
+.auth-art>div:nth-child(3){display:none}
+.wm-auth{font-size:clamp(3.6rem,19vw,5rem)!important;margin-top:6px!important}
+.auth-form{padding:22px 18px calc(28px + var(--sab));justify-content:flex-start}
+.tabs button{padding:.85em .4em;font-size:.85rem}
+.auth-form .btn.primary{padding:1em}
+
+/* ---------- حركات أخف ---------- */
+.rv{transform:translateY(16px);transition-duration:.6s}

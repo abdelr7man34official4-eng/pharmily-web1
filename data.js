@@ -25,6 +25,7 @@ const HERO_PHOTO = "photos/hero.jpg";
 //    خطوات إضافة صورة: حطي الصورة في فولدر photos (مثلاً amal.jpg)
 //    وبعدين اكتبي photo: "photos/amal.jpg" (الاسم لازم يطابق بالظبط، حروف صغيرة/كبيرة مهمة)
 const STUDENTS = [
+  { name: "Abdelrhman Ehab", nickname: "", photo: "Abdelrhman.png" },
   { name: "amal yasser", nickname: "", photo: "" },
   { name: "mariam elsayed", nickname: "", photo: "" },
   { name: "shahd mamdouh", nickname: "", photo: "" },
