@@ -833,6 +833,13 @@ document.addEventListener("click", e => {
 $("meBtn").onclick = () => $("menu").hidden = !$("menu").hidden;
 $("burger").onclick = () => $("nav").classList.toggle("open");
 
+function moveInd() {
+  const box = document.querySelector(".links"); if (!box) return;
+  let ind = box.querySelector(".ind"); if (!ind) { ind = document.createElement("span"); ind.className = "ind"; box.prepend(ind); }
+  const on = box.querySelector("a.on"); if (!on || !on.offsetWidth) { ind.style.opacity = 0; return; }
+  ind.style.width = on.offsetWidth + "px"; ind.style.transform = `translateX(${on.offsetLeft}px)`; ind.style.opacity = 1;
+}
+addEventListener("resize", () => moveInd()); setTimeout(moveInd, 600); document.fonts?.ready.then(() => moveInd());
 $("sbtn").onclick = () => { const n = $("nav"); n.classList.toggle("searching"); if (n.classList.contains("searching")) $("gs").focus(); };
 
 let inited = false;
@@ -851,7 +858,7 @@ function initStatic() {
   // reveal + scroll-spy
   const io = new IntersectionObserver(es => es.forEach(x => x.isIntersecting && x.target.classList.add("in")), { threshold: .12 });
   $$(".rv").forEach(el => io.observe(el));
-  const spy = new IntersectionObserver(es => es.forEach(x => { if (x.isIntersecting) $$(".links a").forEach(a => a.classList.toggle("on", a.getAttribute("href") === "#" + x.target.id)); $$("#tabbar a").forEach(a => a.classList.toggle("on", a.getAttribute("href") === "#" + x.target.id)); }), { rootMargin: "-40% 0px -55% 0px" });
+  const spy = new IntersectionObserver(es => es.forEach(x => { if (x.isIntersecting) $$(".links a").forEach(a => a.classList.toggle("on", a.getAttribute("href") === "#" + x.target.id)); $$("#tabbar a").forEach(a => a.classList.toggle("on", a.getAttribute("href") === "#" + x.target.id)); moveInd(); }), { rootMargin: "-40% 0px -55% 0px" });
   ["home", "memories", "meet", "journey", "future"].forEach(id => spy.observe($(id)));
 }
 })();

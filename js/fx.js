@@ -99,11 +99,11 @@
 (() => {
   const root = document.documentElement, meta = document.querySelector('meta[name="theme-color"]');
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const apply = t => {
+  const apply = (t, save = true) => {
     root.dataset.theme = t; meta && (meta.content = t === "light" ? "#f4f1eb" : "#030302");
-    try { localStorage.setItem("ph_theme", t); } catch { }
+    if (save) try { localStorage.setItem("ph_theme2", t); } catch { }
   };
-  apply(root.dataset.theme === "dark" ? "dark" : "light");
+  apply(root.dataset.theme === "light" ? "light" : "dark", false);   // الافتراضي دارك، ومبنحفظش غير لما حد يغيّر بنفسه
   async function toggle(btn) {
     const next = root.dataset.theme === "light" ? "dark" : "light";
     if (!document.startViewTransition || reduce) {   // متصفح قديم: تغيير ناعم بسيط
