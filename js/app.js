@@ -569,8 +569,8 @@ function renderJourney() {
   const cover = i => { const j = journey.find(x => x.year === i && x.thumb); return j ? j.thumb : (JOURNEY[i].photos[0] || ""); };
   const sig = JSON.stringify(JOURNEY.map((y, i) => [cover(i).length, cnt(i)]));
   if (renderJourney.sig === sig) return; renderJourney.sig = sig;
-  el.innerHTML = `<div class="lead pin"><div><div class="eyebrow">2022 — 2028</div><h2 style="margin-top:10px">Five years, <em>one story</em></h2><p class="ar">من أول يوم لحد التخرج. دوس على أي سنة، شوف اللي حصل فيها وضيف صورك وذكرياتك وأحداث السنة دي.</p></div>${ic("route", "lg")}</div>` +
-    JOURNEY.map((y, i) => { const c = cover(i), n = cnt(i); return `<button class="yr lift tilt pin" data-yr="${i}" style="--d:${.06 * (i + 1)}s${c ? `;background-image:url('${esc(c)}')` : ""}"><span class="big">${i + 1}</span><span class="badge2">${ic(["cap", "flask", "pill", "users", "sparkles"][i % 5])}</span><small>${esc(y.year)} · ${esc(y.date)}</small><h3>${esc(y.title)}</h3><p class="ar">${esc(y.text)}</p><span class="cnt">${ic("image")}${n} ${n === 1 ? "moment" : "moments"}</span></button>`; }).join("");
+  el.innerHTML = `<div class="lead pin"><div><div class="eyebrow">2022 — 2028</div><h2 style="margin-top:10px">Five years, <em>one story</em></h2><p class="ar">يمكن السنين عدّت أسرع مما تمنّينا بس كل سنة سابت جوانا حكاية وكل حكاية تستحق نرجعلها تاني، دوس على أي سنة وشوف رحلتنا فيها 💗</p></div>${ic("route", "lg")}</div>` +
+    JOURNEY.map((y, i) => { const c = cover(i), n = cnt(i); return `<button class="yr lift tilt pin" data-yr="${i}" style="--d:${.06 * (i + 1)}s${c ? `;background-image:url('${esc(c)}')` : ""}"><span class="big">${i + 1}</span><span class="badge2">${ic(["cap", "flask", "pill", "users", "sparkles", "party"][i % 6])}</span><small>${esc(y.year)} · ${esc(y.date)}</small><h3>${esc(y.title)}</h3><p class="ar">${esc(y.text)}</p><span class="cnt">${ic("image")}${n} ${n === 1 ? "moment" : "moments"}</span></button>`; }).join("");
 }
 function openYear(i) {
   const y = JOURNEY[i];
@@ -794,9 +794,16 @@ function renderFuture(list) {
   list.sort((a, b) => a.unlock - b.unlock);
   put($("fl"), list.map(m => Date.now() >= m.unlock ? `<div class="fut">${ic("sparkles")}<span>${esc(m.text)}</span></div>` : `<div class="fut">${ic("lock")}<span class="ar">مقفولة · فاضل ${Math.ceil((m.unlock - Date.now()) / 864e5)} يوم</span></div>`).join(""));
 }
+var fyYears = [1, 3, 5].includes(FUTURE_YEARS) ? FUTURE_YEARS : 5;
+function setFY(n) {
+  fyYears = n;
+  const s = $("fy"); if (s) s.textContent = n === 1 ? "سنة" : n + " سنين";
+  document.querySelectorAll("#fyPick button").forEach(b => b.classList.toggle("on", +b.dataset.y === n));
+}
+$("fyPick").onclick = e => { const b = e.target.closest("button[data-y]"); if (b) setFY(+b.dataset.y); };
 $("sv").onclick = async () => {
   const t = $("fm").value.trim(); if (!t || !me) return;
-  const d = new Date(); d.setFullYear(d.getFullYear() + FUTURE_YEARS);
+  const d = new Date(); d.setFullYear(d.getFullYear() + fyYears);
   try { await addDoc(collection(db, "users", me.uid, "future"), { text: t.slice(0, 2000), unlock: d.getTime(), createdAt: serverTimestamp() }); $("fm").value = ""; toast("اتقفلت لحد " + d.getFullYear()); }
   catch (e) { console.error(e); toast("معرفتش أحفظها.", true); }
 };
@@ -857,7 +864,7 @@ function initStatic() {
     if (typeof LETTER_SIGN === "string" && LETTER_SIGN) { const s = document.createElement("p"); s.className = "sign"; s.textContent = LETTER_SIGN; lt.appendChild(s); }
     const tg = $("ltToggle");
     if (tg) tg.onclick = () => { const open = lt.classList.toggle("open"); tg.textContent = open ? "إخفاء الرسالة ▲" : "اقرأ الرسالة كاملة ▼"; if (!open) lt.scrollIntoView({block:"nearest"}); };
-  } $("fy").textContent = FUTURE_YEARS;
+  } setFY(fyYears);
   $("mq").textContent = ("PHARMILY · 16 · CLINICAL PHARMACY · ZAGAZIG UNIVERSITY · ").repeat(10);
 
   // غلاف اختياري

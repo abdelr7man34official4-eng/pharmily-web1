@@ -110,15 +110,16 @@ const STUDENTS = [
   { name: "mahmoud sherif", nickname: "", photo: "" }
 ];
 
-// 3) الـ Journey: 5 سنين. كل سنة فيها عنوان ووصف وصور.
+// 3) الـ Journey: 6 سنين. كل سنة فيها عنوان ووصف وصور.
 //    لإضافة صورة للسنة: حطي الصورة في photos واكتبي مسارها جوه photos: [ ... ]
 //    مثال:  photos: ["photos/y1-a.jpg", "photos/y1-b.jpg"]
 const JOURNEY = [
-  { year: "Year 1", date: "2022", title: "The First Hello", text: "أول يوم وأول وشوش جديدة.", photos: [] },
-  { year: "Year 2", date: "2023", title: "Organic Nights", text: "سهر ومذاكرة وضحك.", photos: [] },
-  { year: "Year 3", date: "2024", title: "Into the Labs", text: "المعامل والبالطو الأبيض.", photos: [] },
-  { year: "Year 4", date: "2025", title: "The Hardest Year", text: "شلنا بعض.", photos: [] },
-  { year: "Year 5", date: "2026", title: "Almost There", text: "قرّبنا نخلص.", photos: [] }
+  { year: "Year 1", date: "2022", title: "Where It All Began", text: "أول خطوة في رحلة ماكنّاش نعرف نهايتها، وشوش جديدة وحكاية لسا بتتكتب 💓", photos: [] },
+  { year: "Year 2", date: "2023", title: "Finding Our Place", text: "بدأنا نعرف المكان اكتر ونعرف بعض ونخلق ذكريات فيه تعيش للابد 💗", photos: [] },
+  { year: "Year 3", date: "2024", title: "Somewhere in Between", text: "في نص الطريق ما بين أحلام بنجري وراها وأيام بنعيشها اتجمعت زكريات كتير هتفضل عايشه معانا 💗", photos: [] },
+  { year: "Year 4", date: "2025", title: "The People Who Made It Home", text: "هنا نقدر نقول بجد لقد أصبحت الدار داري والرفاق رفاقي والمكان يعرفني الحمد لله 💗", photos: [] },
+  { year: "Year 5", date: "2026", title: "The Beginning of Goodbye", text: "يُقالُ عِندَ الوَداع مع السَّلامَة ، أينَ السَّلامَةُ فِى وَدَاعِ المُحبِين ؟", photos: [] },
+  { year: "Year 6", date: "2027", title: "Until we meet again", text: "اللهم في طرقنا القادمة، اكتب لنا ولمن أحببنا أجمل الأقدار 💗", photos: [] }
 ];
 
 // 4) رسالتك الخاصة (Special Letter) - عدليها زي ما تحبي
