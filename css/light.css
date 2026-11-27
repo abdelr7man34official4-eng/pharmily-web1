@@ -148,3 +148,16 @@ html[data-theme="light"] .yr .cnt{color:#fff}
 html[data-theme="light"] .yr .badge2{color:#fff;background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.35)}
 html[data-theme="light"] .lb .by,html[data-theme="light"] .lb .by span,html[data-theme="light"] .lb .cap{color:#fff}
 html[data-theme="light"] :is(.mc,.yr,.lb) .av,html[data-theme="light"] :is(.mc,.yr,.lb) .av *{color:#1f2130;text-shadow:none}
+
+/* كروت الأدمن والـ core في الوضع الفاتح */
+html[data-theme="light"] .st{--ra1:#72202e;--ra2:#e8c98a;--ra3:#1f2130}
+html[data-theme="light"] .st.role-admin,html[data-theme="light"] .st.role-core{background:#fffdf9}
+html[data-theme="light"] .st .rtag{background:linear-gradient(135deg,#1f2130,#72202e);color:#fff}
+html[data-theme="light"] .st .rsub{color:#72202e}
+
+/* الأدمن والـ core: إضاءة دهبية دافية بدل الظل الغامق */
+html[data-theme="light"] .st.role-admin,html[data-theme="light"] .st.role-core{--ga:214,162,84;--gb:232,201,138}
+html[data-theme="light"] .st.role-admin{box-shadow:0 0 22px rgba(214,162,84,.32),0 8px 24px rgba(214,162,84,.18)}
+html[data-theme="light"] .st.role-core{box-shadow:0 0 14px rgba(214,162,84,.22),0 6px 18px rgba(214,162,84,.12)}
+html[data-theme="light"] .st.role-admin:hover,html[data-theme="light"] .st.role-core:hover{box-shadow:0 0 40px rgba(214,162,84,.5),0 12px 30px rgba(214,162,84,.25)}
+html[data-theme="light"] .tabs .tab-pill{background:linear-gradient(135deg,rgba(150,52,68,.92),rgba(114,32,46,.92));box-shadow:inset 0 1.5px 0 rgba(255,255,255,.4),inset 0 -6px 12px rgba(0,0,0,.12),0 6px 20px rgba(114,32,46,.3)}

@@ -4,6 +4,8 @@ service cloud.firestore {
 
     function signedIn() { return request.auth != null; }
     function isMe(uid) { return signedIn() && request.auth.uid == uid; }
+    // الأدمن: حساب Firebase واحد بس (الإيميل ده). مفيش باسورد في الكود أبدًا.
+    function isAdmin() { return signedIn() && request.auth.token.email == 'admin.fadl.mummy@pharmily16.app'; }
     function userDoc(uid) { return get(/databases/$(database)/documents/users/$(uid)).data; }
 
     // ---------- البروفايلات ----------
@@ -21,9 +23,10 @@ service cloud.firestore {
         && request.resource.data.photo is string && request.resource.data.photo.size() < 60000
         && request.resource.data.nickname.size() <= 30
         && request.resource.data.bio.size() <= 160;
-      allow delete: if false;
+      // الأدمن بس يقدر يلغي تسجيل حد (عشان يسجل من الأول)
+      allow delete: if isAdmin();
 
-      // رسايل Future Me (خاصة بصاحبها بس)
+      // رسايل Future Me (الأدمن مالوش وصول ليها) (خاصة بصاحبها بس)
       match /future/{id} {
         allow read, delete: if isMe(uid);
         allow create: if isMe(uid) && request.resource.data.text is string && request.resource.data.text.size() <= 2000;
@@ -43,6 +46,11 @@ service cloud.firestore {
 
       // التعديل: (1) صاحب الذكرى يعدّل الكابشن بس  (2) أي حد يغيّر رياكته هو بس  (3) عداد التعليقات يتغير بواحد
       allow update: if signedIn() && (
+        ( isAdmin()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['caption', 'edited'])
+          && request.resource.data.caption is string
+          && request.resource.data.caption.size() > 0 && request.resource.data.caption.size() <= 300 )
+        ||
         ( resource.data.authorId == request.auth.uid
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['caption', 'edited'])
           && request.resource.data.caption is string
@@ -57,7 +65,7 @@ service cloud.firestore {
           && request.resource.data.cc >= 0
           && math.abs(request.resource.data.cc - resource.data.get('cc', 0)) <= 1 )
       );
-      allow delete: if signedIn() && resource.data.authorId == request.auth.uid;
+      allow delete: if signedIn() && (resource.data.authorId == request.auth.uid || isAdmin());
 
       // الصورة الكبيرة (بتتحمل لما حد يفتح الصورة بس)
       match /blobs/{b} {
@@ -65,8 +73,8 @@ service cloud.firestore {
         allow create: if signedIn()
           && get(/databases/$(database)/documents/memories/$(id)).data.authorId == request.auth.uid
           && request.resource.data.data is string && request.resource.data.data.size() < 950000;
-        allow delete: if signedIn()
-          && get(/databases/$(database)/documents/memories/$(id)).data.authorId == request.auth.uid;
+        allow delete: if signedIn() && (isAdmin()
+          || get(/databases/$(database)/documents/memories/$(id)).data.authorId == request.auth.uid);
       }
 
       // التعليقات
@@ -78,37 +86,41 @@ service cloud.firestore {
           && request.resource.data.text is string
           && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 500;
         // صاحب التعليق أو صاحب الذكرى يمسحوه
-        allow delete: if signedIn() && (resource.data.authorId == request.auth.uid
+        allow delete: if signedIn() && (isAdmin() || resource.data.authorId == request.auth.uid
           || get(/databases/$(database)/documents/memories/$(id)).data.authorId == request.auth.uid);
         allow update: if false;
       }
     }
 
-    // ---------- Our Journey (ذكريات وأحداث كل سنة) ----------
+    // ---------- Our Journey (الأدمن بس هو اللي يضيف ويمسح) ----------
     match /journey/{id} {
       allow read: if signedIn();
-      allow create: if signedIn()
+      allow create: if isAdmin()
         && request.resource.data.authorId == request.auth.uid
-        && request.resource.data.authorName == userDoc(request.auth.uid).name
+        && request.resource.data.authorName is string
         && request.resource.data.year is int
-        && request.resource.data.year >= 0 && request.resource.data.year < 5
+        && request.resource.data.year >= 0 && request.resource.data.year < 6
         && request.resource.data.text is string && request.resource.data.text.size() <= 600
         && request.resource.data.thumb is string && request.resource.data.thumb.size() < 200000
         && (request.resource.data.text.size() > 0 || request.resource.data.thumb.size() > 0);
       allow update: if false;
-      allow delete: if signedIn() && resource.data.authorId == request.auth.uid;
+      allow delete: if isAdmin();
 
       match /blobs/{b} {
         allow read: if signedIn();
-        allow create: if signedIn()
-          && get(/databases/$(database)/documents/journey/$(id)).data.authorId == request.auth.uid
+        allow create: if isAdmin()
           && request.resource.data.data is string && request.resource.data.data.size() < 950000;
-        allow delete: if signedIn()
-          && get(/databases/$(database)/documents/journey/$(id)).data.authorId == request.auth.uid;
+        allow delete: if isAdmin();
       }
     }
 
-    // ---------- الشات (بين اتنين بس) ----------
+    // ---------- إلغاء التسجيل (رقم نسخة لكل طالب، بيقراه أي حد وبيكتبه الأدمن بس) ----------
+    match /resets/{k} {
+      allow read: if true;
+      allow write: if isAdmin() && request.resource.data.ver is int;
+    }
+
+    // ---------- الشات (بين اتنين بس — الأدمن مش عضو فمش بيشوف أي رسالة) ----------
     match /chats/{chatId} {
       allow read: if signedIn() && request.auth.uid in resource.data.members;
       allow create: if signedIn()

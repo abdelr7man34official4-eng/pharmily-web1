@@ -19,6 +19,9 @@ const first2 = n => title(n).split(" ").slice(0, 2).join(" ");
 const initials = n => first2(n).split(" ").map(w => w[0]).join("");
 const slug = k => clean(k).replace(/[^a-z0-9]+/g, ".").replace(/^\.|\.$/g, "");
 const emailOf = k => `${slug(k)}@pharmily16.app`;
+/* الأدمن: اسم المستخدم هنا بس، والباسورد مش في الكود خالص (متخزن في Firebase Auth مشفّر) */
+const ADMIN_USER = "fadl_mummy", ADMIN_EMAIL = "admin.fadl.mummy@pharmily16.app";
+const isAdmin = () => !!(typeof me !== "undefined" && me && me.isAdmin);
 const ic = (n, c = "") => `<svg class="ic ${c}" aria-hidden="true"><use href="#i-${n}"/></svg>`;
 const ms = t => t?.toMillis ? t.toMillis() : (typeof t === "number" ? t : Date.now());
 const fmtDate = t => new Date(ms(t)).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
@@ -27,7 +30,7 @@ const put = (el, html) => { if (el._h !== html) { el._h = html; el.innerHTML = h
 const raf = fn => requestAnimationFrame(fn);
 
 /* ---------- الطلبة (من data.js) ---------- */
-const PEOPLE = STUDENTS.map((s, i) => ({ name: s.name, key: clean(s.name), nickname: s.nickname || "", photo: s.photo || `photos/${i + 1}.jpg` }));
+const PEOPLE = STUDENTS.map((s, i) => ({ name: s.name, key: clean(s.name), nickname: s.nickname || "", photo: s.photo || `photos/${i + 1}.jpg`, role: s.role || "" }));
 const PBYKEY = new Map(PEOPLE.map(p => [p.key, p]));
 
 /* ---------- Firebase ---------- */
@@ -109,7 +112,12 @@ const avUid = (uid, size) => { const u = users.get(uid); return u ? av(u.name, u
 /* =========================================================
    شاشة التسجيل / الدخول
    ========================================================= */
-const showAuth = () => { $("splash").classList.add("off"); $("app").hidden = true; $("auth").hidden = false; };
+const showAuth = () => {
+  $("splash").classList.add("off"); $("app").hidden = true; $("auth").hidden = false;
+  // رجّع الشاشة للوضع العادي (ممكن تكون اتقفلت على فورم الأدمن قبل كده)
+  $("adminForm").hidden = true; document.querySelector(".tabs").hidden = false; $("admPass").value = ""; $("admNew").checked = false;
+  const on = document.querySelector('.tabs button.on')?.dataset.tab || "register"; $("regForm").hidden = on !== "register"; $("loginForm").hidden = on !== "login";
+};
 const authErr = (id, m) => { const e = $(id); e.textContent = m; const f = e.closest("form"); f.classList.remove("shake"); void f.offsetWidth; f.classList.add("shake"); };
 const authMsg = e => ({
   "auth/email-already-in-use": "الاسم ده متسجل قبل كدا. دوس Sign in وادخل بالباسورد بتاعك.",
@@ -117,12 +125,14 @@ const authMsg = e => ({
   "auth/weak-password": "الباسورد لازم 6 حروف على الأقل.", "auth/network-request-failed": "مفيش إنترنت. جرب تاني.",
   "auth/operation-not-allowed": "فعّل Email/Password في Firebase (Authentication > Sign-in method).",
   "auth/unauthorized-domain": "ضيف دومين الموقع في Firebase (Authentication > Settings > Authorized domains).",
-  "auth/too-many-requests": "محاولات كتير. استنى شوية وجرب."
+  "auth/too-many-requests": "محاولات كتير. استنى شوية وجرب.",
+  "reset": "تسجيلك اتلغى من الأدمن. دوس Register وسجّل من الأول بباسورد جديد."
 }[e.code] || ("حصل خطأ: " + (e.code || e.message)));
 
 $$(".tabs button").forEach(b => b.onclick = () => {
+  const tb = b.closest(".tabs"); tb.classList.add("sliding"); setTimeout(() => tb.classList.remove("sliding"), 260);
   $$(".tabs button").forEach(x => x.classList.toggle("on", x === b));
-  $("regForm").hidden = b.dataset.tab !== "register"; $("loginForm").hidden = b.dataset.tab !== "login";
+  $("regForm").hidden = b.dataset.tab !== "register"; $("loginForm").hidden = b.dataset.tab !== "login"; $("adminForm").hidden = true;
 });
 $$("[data-eye]").forEach(b => b.onclick = () => {
   const i = b.previousElementSibling, show = i.type === "password"; i.type = show ? "text" : "password";
@@ -168,7 +178,7 @@ $("regForm").onsubmit = async e => {
   try {
     registering = true;
     await setPersistence(auth, $("regRemember").checked ? browserLocalPersistence : browserSessionPersistence);
-    const cred = await createUserWithEmailAndPassword(auth, emailOf(p.key), pw);
+    const cred = await createUserWithEmailAndPassword(auth, await emailFor(p.key), pw);
     const data = { uid: cred.user.uid, name: p.name, key: p.key, nickname: p.nickname, bio: "", photo: regPhoto || "", createdAt: serverTimestamp() };
     await setDoc(doc(db, "users", cred.user.uid), data);
     registering = false;
@@ -182,20 +192,50 @@ $("loginForm").onsubmit = async e => {
   const p = findPerson($("logName").value);
   if (!p) return authErr("logErr", "الاسم ده مش من دفعة Pharmily 16.");
   const btn = e.target.querySelector("button[type=submit]"); btn.disabled = true; $("logErr").textContent = "";
-  const pw = $("logPass").value;
+  const pw = $("logPass").value; let em = "";
   try {
     await setPersistence(auth, $("logRemember").checked ? browserLocalPersistence : browserSessionPersistence);
-    try { await signInWithEmailAndPassword(auth, emailOf(p.key), pw); }   // onAuthStateChanged هيكمل
+    em = await emailFor(p.key);
+    try { await signInWithEmailAndPassword(auth, em, pw); }   // onAuthStateChanged هيكمل
     catch (err) {
       // الموبايل ساعات بيضيف مسافة في آخر الباسورد: جرّب من غيرها
-      if (pw !== pw.trim() && (err.code === "auth/invalid-credential" || err.code === "auth/wrong-password")) await signInWithEmailAndPassword(auth, emailOf(p.key), pw.trim());
+      if (pw !== pw.trim() && (err.code === "auth/invalid-credential" || err.code === "auth/wrong-password")) await signInWithEmailAndPassword(auth, em, pw.trim());
       else throw err;
     }
   } catch (err) {
     console.error(err);
     if ((err.code === "auth/invalid-credential" || err.code === "auth/wrong-password") && pw.trim() === PASSWORD)
       authErr("logErr", "ده كود الدفعة (بيتكتب مرة واحدة وقت التسجيل بس). هنا اكتب الباسورد الخاص بيك اللي اخترته وقت التسجيل. ولو لسه ماسجلتش دوس Register.");
+    else if (em.includes(".v") && (err.code === "auth/invalid-credential" || err.code === "auth/user-not-found" || err.code === "auth/wrong-password")) authErr("logErr", "لو الأدمن لغى تسجيلك دوس Register وسجّل من الأول، غير كده الباسورد غلط.");
     else authErr("logErr", authMsg(err));
+  }
+  btn.disabled = false;
+};
+
+async function emailFor(key) {
+  const k = slug(key); let v = 0;
+  try { const s = await getDoc(doc(db, "resets", k)); v = s.exists() ? (s.data().ver || 0) : 0; } catch (e) { }
+  return v ? `${k}.v${v}@pharmily16.app` : emailOf(key);
+}
+/* ---------- دخول / تسجيل الأدمن ---------- */
+document.addEventListener("click", e => {
+  if (e.target.closest("[data-adminopen]")) { $("regForm").hidden = true; $("loginForm").hidden = true; $("adminForm").hidden = false; document.querySelector(".tabs").hidden = true; $("admUser").focus(); }
+  if (e.target.closest("[data-adminback]")) { $("adminForm").hidden = true; document.querySelector(".tabs").hidden = false; document.querySelector('.tabs button[data-tab="login"]').click(); }
+});
+$("adminForm").onsubmit = async e => {
+  e.preventDefault();
+  if (!CONFIGURED) return authErr("admErr", "Firebase مش متوصل لسه.");
+  const un = $("admUser").value.trim().toLowerCase(), pw = $("admPass").value;
+  if (un !== ADMIN_USER.toLowerCase()) return authErr("admErr", "اسم الأدمن غلط.");
+  if (pw.length < 6) return authErr("admErr", "الباسورد لازم 6 حروف على الأقل.");
+  const btn = e.target.querySelector("button[type=submit]"); btn.disabled = true; $("admErr").textContent = "";
+  try {
+    await setPersistence(auth, $("admRemember").checked ? browserLocalPersistence : browserSessionPersistence);
+    if ($("admNew").checked) await createUserWithEmailAndPassword(auth, ADMIN_EMAIL, pw);
+    else await signInWithEmailAndPassword(auth, ADMIN_EMAIL, pw);
+  } catch (err) {
+    console.error(err);
+    authErr("admErr", err.code === "auth/email-already-in-use" ? "حساب الأدمن متسجل قبل كده. شيل علامة (أول مرة) وادخل بالباسورد." : (err.code === "auth/invalid-credential" || err.code === "auth/user-not-found") ? "الباسورد غلط، أو حساب الأدمن لسه متسجلش (علّم على أول مرة)." : authMsg(err));
   }
   btn.disabled = false;
 };
@@ -206,8 +246,11 @@ $("loginForm").onsubmit = async e => {
 async function ensureProfile(u) {
   const ref = doc(db, "users", u.uid), s = await getDoc(ref);
   if (s.exists()) return { uid: u.uid, ...s.data() };
-  const local = (u.email || "").split("@")[0], p = PEOPLE.find(x => slug(x.key) === local);
+  const local0 = (u.email || "").split("@")[0], vm = /\.v(\d+)$/.exec(local0), ev = vm ? +vm[1] : 0, local = local0.replace(/\.v\d+$/, "");
+  const p = PEOPLE.find(x => slug(x.key) === local);
   if (!p) { await signOut(auth); throw new Error("no-profile"); }
+  let cur = 0; try { const rs = await getDoc(doc(db, "resets", local)); cur = rs.exists() ? (rs.data().ver || 0) : 0; } catch (e) { }
+  if (ev < cur) { await signOut(auth); throw Object.assign(new Error("reset"), { code: "reset" }); }
   const data = { uid: u.uid, name: p.name, key: p.key, nickname: p.nickname, bio: "", photo: "", createdAt: serverTimestamp() };
   await setDoc(ref, data); return data;
 }
@@ -217,6 +260,7 @@ if (CONFIGURED) {
     if (registering) return;
     if (!u) { stopApp(); showAuth(); return; }
     if (started && me?.uid === u.uid) return;
+    if (u.email === ADMIN_EMAIL) { await startApp({ uid: u.uid, name: "Admin", key: "admin", nickname: "", bio: "", photo: "", isAdmin: true }); return; }
     try { await startApp(await ensureProfile(u)); }
     catch (err) { console.error(err); showAuth(); authErr("logErr", err.code === "permission-denied" ? "قواعد Firestore مش منشورة. راجع الدليل." : authMsg(err)); }
   });
@@ -226,25 +270,31 @@ async function startApp(profile, justRegistered) {
   if (started) stopApp();
   started = true; me = { ...profile };
   $("auth").hidden = true; $("app").hidden = false; $("partyBtn").hidden = false; $("splash").classList.add("off");
+  document.body.classList.toggle("is-admin", !!me.isAdmin); $("admBtn").hidden = $("admRow").hidden = !me.isAdmin;
   initStatic(); renderAll();
   unsubs.push(onSnapshot(collection(db, "users"), snap => {
     users.clear(); usersByKey.clear();
     snap.forEach(d => { const u = { uid: d.id, ...d.data() }; users.set(d.id, u); usersByKey.set(u.key, u); });
+    // الأدمن لغى تسجيلي وأنا فاتح: اطلع برة
+    if (!me.isAdmin && !registering && !snap.metadata?.fromCache && !users.has(me.uid)) { toast("الأدمن لغى تسجيلك. سجّل من الأول.", true); signOut(auth); return; }
     if (users.get(me.uid)) me = { ...users.get(me.uid) };
     renderAll();
   }, fail));
   listenMemories(); listenJourney();
-  unsubs.push(onSnapshot(query(collection(db, "memories"), where("authorId", "==", me.uid), limit(1)), snap => { myMemCount = snap.size; flags.mem = true; renderAll(); }, fail));
-  unsubs.push(onSnapshot(query(collection(db, "chats"), where("members", "array-contains", me.uid)), onChats, fail));
-  futUnsub = onSnapshot(collection(db, "users", me.uid, "future"), snap => renderFuture(snap.docs.map(d => ({ id: d.id, ...d.data() }))), fail);
-  unsubs.push(futUnsub);
+  if (!me.isAdmin) {   // الأدمن مالوش شات ولا Future Me ولا ذكريات باسمه
+    unsubs.push(onSnapshot(query(collection(db, "memories"), where("authorId", "==", me.uid), limit(1)), snap => { myMemCount = snap.size; flags.mem = true; renderAll(); }, fail));
+    unsubs.push(onSnapshot(query(collection(db, "chats"), where("members", "array-contains", me.uid)), onChats, fail));
+    futUnsub = onSnapshot(collection(db, "users", me.uid, "future"), snap => renderFuture(snap.docs.map(d => ({ id: d.id, ...d.data() }))), fail);
+    unsubs.push(futUnsub);
+  }
+  if (me.isAdmin) toast("أهلاً يا أدمن. اللوحة من زرار Admin فوق.");
   if (justRegistered) { toast("أهلاً بيك في Pharmily! بروفايلك جاهز."); }
 }
 function stopApp() {
   unsubs.forEach(f => f()); unsubs = []; memUnsub?.(); memUnsub = null; threadUnsub?.(); threadUnsub = null;
   users.clear(); usersByKey.clear(); memories = []; journey = []; chats = []; current = null; me = null; started = false; seenMem.clear();
   flags.mem = flags.chats = false; myMemCount = 0; renderJourney.sig = ""; closeViewer(true); yearOpen = null;
-  $("chat").hidden = true; $("partyBtn").hidden = true;
+  $("chat").hidden = true; $("partyBtn").hidden = true; document.body.classList.remove("is-admin");
 }
 function fail(err) { console.error(err); if (err.code === "permission-denied") toast("مفيش صلاحية: تأكد إن قواعد Firestore منشورة.", true); }
 
@@ -268,7 +318,10 @@ function renderPeople() {
   const n = Math.max(1, Math.ceil(all.length / 30)); if (page > n) page = 1;
   put($("grid"), all.slice((page - 1) * 30, page * 30).map(o => {
     const photo = o.p.photo /* ثابتة: من فولدر photos بس، الطالب مش بيغيّرها */, nick = o.u?.nickname || o.p.nickname;
-    return `<button class="st lift tilt ${o.u ? "" : "off"}" data-act="profile" data-v="${esc(o.p.key)}"><div class="av" style="position:relative">${o.u ? '<span class="dot" title="Joined"></span>' : ""}<span>${esc(initials(o.p.name))}</span>${photo ? `<img src="${esc(photo)}" alt="" loading="lazy" onerror="this.remove()">` : ""}</div><b>${esc(first2(o.p.name))}</b><i>${esc(nick)}</i></button>`;
+    const role = o.p.role, rcls = role ? ` role-${role}` : "";
+    const badge = role === "admin" ? `<span class="rtag">${ic("sparkles")}Admin</span>` : role === "core" ? `<span class="rtag">${ic("sparkles")}Core Team</span>` : "";
+    const fx = role ? `<span class="aura" aria-hidden="true"></span><span class="spk s1"></span><span class="spk s2"></span><span class="spk s3"></span>` : "";
+    return `<button class="st lift tilt${rcls} ${o.u ? "" : "off"}" data-act="profile" data-v="${esc(o.p.key)}">${fx}<div class="av" style="position:relative">${o.u ? '<span class="dot" title="Joined"></span>' : ""}<span>${esc(initials(o.p.name))}</span>${photo ? `<img src="${esc(photo)}" alt="" loading="lazy" onerror="this.remove()">` : ""}</div><b>${esc(first2(o.p.name))}</b><i>${esc(nick)}</i>${badge}</button>`;
   }).join(""));
   put($("pages"), n > 1 ? Array.from({ length: n }, (_, i) => `<button class="btn sm ${i + 1 === page ? "on" : ""}" data-p="${i + 1}">${i + 1}</button>`).join("") : "");
   $("fAll").classList.toggle("on", !filterJoined); $("fJoined").classList.toggle("on", filterJoined);
@@ -371,7 +424,7 @@ document.addEventListener("click", e => {
 }, true);
 
 function memCard(m, isNew) {
-  const own = m.authorId === me.uid, u = users.get(m.authorId);
+  const own = m.authorId === me.uid || isAdmin(), u = users.get(m.authorId);
   return `<article class="mem tilt ${isNew ? "new" : ""}">
     <div class="mh">${av(m.authorName, u?.photo, 40)}
       <button class="who" data-act="profile" data-v="${esc(clean(m.authorName))}"><b>${esc(first2(m.authorName))}</b><small>${fmtDate(m.createdAt)}${m.edited ? " · edited" : ""}</small></button>
@@ -425,7 +478,7 @@ function closeViewer(now) {
   if (now) v.el.remove(); else setTimeout(() => v.el.remove(), 300);
 }
 function viewerTop(m) {
-  const own = m.authorId === me.uid, u = users.get(m.authorId);
+  const own = m.authorId === me.uid || isAdmin(), u = users.get(m.authorId);
   const cap = viewer.editing
     ? `<div class="capedit"><textarea id="pvCap" rows="3" maxlength="140" dir="auto">${esc(m.caption)}</textarea><div class="pf-act" style="margin:8px 0 0"><button class="btn primary sm" data-act="savecap">${ic("check")}Save</button><button class="btn sm" data-act="cancelcap">Cancel</button></div></div>`
     : (m.caption ? `<p class="cap">${esc(m.caption)}${m.edited ? `<small> · edited</small>` : ""}</p>` : "");
@@ -437,7 +490,7 @@ function refreshViewer() {
   put($("pvTop"), viewerTop(m)); renderComments();
 }
 function renderComments() {
-  if (!viewer) return; const m = memCache.get(viewer.id), box = $("pvList"), owner = m?.authorId === me.uid, cs = viewer.comments;
+  if (!viewer) return; const m = memCache.get(viewer.id), box = $("pvList"), owner = m?.authorId === me.uid || isAdmin(), cs = viewer.comments;
   put(box, cs.length ? cs.map(c => {
     const mine = c.authorId === me.uid, u = users.get(c.authorId);
     return `<div class="cm"><button class="cavb" data-act="profile" data-v="${esc(clean(c.authorName))}">${av(c.authorName, u?.photo, 34)}</button><div class="cbody"><div class="cbub"><b>${esc(first2(c.authorName))}</b><span dir="auto">${esc(c.text)}</span></div><div class="cmeta"><span>${fmtDate(c.createdAt)} · ${fmtTime(c.createdAt)}</span>${mine || owner ? `<button data-act="delcm" data-v="${c.id}">Delete</button>` : ""}</div></div></div>`;
@@ -543,12 +596,15 @@ function openUpload() {
     } catch (err) { console.error(err); m.querySelector("#upErr").textContent = "مقدرتش أرفع الصورة: " + (err.code || err.message); go.disabled = false; go.innerHTML = ic("send") + "<span>Share</span>"; }
   };
 }
+async function purgeMemory(id) {
+  try { const cs = await getDocs(collection(db, "memories", id, "comments")); await Promise.all(cs.docs.map(d => deleteDoc(doc(db, "memories", id, "comments", d.id)).catch(() => { }))); } catch (e) { }
+  await deleteDoc(doc(db, "memories", id, "blobs", "full")).catch(() => { }); await deleteDoc(doc(db, "memories", id)); memCache.delete(id);
+}
 async function deleteMemory(id) {
   if (!await confirmBox("تمسح الذكرى دي؟")) return;
   try {
     if (viewer?.id === id) closeViewer();
-    try { const cs = await getDocs(collection(db, "memories", id, "comments")); await Promise.all(cs.docs.map(d => deleteDoc(doc(db, "memories", id, "comments", d.id)).catch(() => { }))); } catch (e) { }
-    await deleteDoc(doc(db, "memories", id, "blobs", "full")).catch(() => { }); await deleteDoc(doc(db, "memories", id)); memCache.delete(id); toast("اتمسحت.");
+    await purgeMemory(id); toast("اتمسحت.");
   } catch (e) { console.error(e); toast("معرفتش أمسحها.", true); }
 }
 
@@ -575,7 +631,7 @@ function renderJourney() {
 function openYear(i) {
   const y = JOURNEY[i];
   const m = modal(`<div class="eyebrow">${esc(y.year)} · ${esc(y.date)}</div><h3 style="margin-top:8px;font-size:1.9rem">${esc(y.title)}</h3><p class="ar" style="opacity:.85">${esc(y.text)}</p>
-    <div class="pf-act"><button class="btn primary" data-act="jadd" data-v="${i}">${ic("plus")}Add to ${esc(y.year)} · ضيف ذكرى</button></div><div class="jlist" id="jList"></div>`, "wide");
+    ${isAdmin() ? `<div class="pf-act"><button class="btn primary" data-act="jadd" data-v="${i}">${ic("plus")}Add to ${esc(y.year)} · ضيف ذكرى</button></div>` : ""}<div class="jlist" id="jList"></div>`, "wide");
   yearOpen = { i, m }; fillYear();
 }
 function fillYear() {
@@ -584,11 +640,11 @@ function fillYear() {
   const i = yearOpen.i, y = JOURNEY[i];
   const list = journey.filter(j => j.year === i).sort((a, b) => ms(b.createdAt) - ms(a.createdAt));
   const html = list.map(j => {
-    const u = users.get(j.authorId), own = j.authorId === me.uid;
+    const u = users.get(j.authorId), own = j.authorId === me.uid || isAdmin();
     return `<article class="jit">${j.thumb ? `<button class="jpic" data-act="zoomj" data-v="${j.id}" aria-label="Open photo"><img src="${esc(j.thumb)}" alt="" loading="lazy"></button>` : ""}
       <div class="jtx">${j.text ? `<p dir="auto">${esc(j.text)}</p>` : ""}<div class="by">${av(j.authorName, u?.photo, 30)}<span><b>${esc(first2(j.authorName))}</b><small>${fmtDate(j.createdAt)}</small></span>${own ? `<button class="circle" data-act="deljit" data-v="${j.id}" aria-label="Delete" style="width:34px;height:34px;margin-inline-start:auto">${ic("trash")}</button>` : ""}</div></div></article>`;
   }).join("") + (y.photos.length ? `<div class="ph">${y.photos.map(p => `<img src="${esc(p)}" alt="" loading="lazy">`).join("")}</div>` : "");
-  put(yearOpen.m.querySelector("#jList"), html || `<div class="empty-box" style="padding:30px 14px"><span style="color:var(--g)">${ic("sparkles")}</span><b class="ar" style="color:var(--g2)">لسه مفيش حاجة في السنة دي. ضيف أول ذكرى!</b></div>`);
+  put(yearOpen.m.querySelector("#jList"), html || `<div class="empty-box" style="padding:30px 14px"><span style="color:var(--g)">${ic("sparkles")}</span><b class="ar" style="color:var(--g2)">لسه مفيش حاجة في السنة دي. ${isAdmin() ? "ضيف أول ذكرى!" : "قريب هيتضاف هنا حاجات حلوة 💗"}</b></div>`);
 }
 function openJourneyAdd(i) {
   let full = "", thumb = ""; const y = JOURNEY[i];
@@ -623,6 +679,66 @@ async function deleteJourneyItem(id) {
   if (!await confirmBox("تمسح الذكرى دي من السنة؟")) return;
   try { await deleteDoc(doc(db, "journey", id, "blobs", "full")).catch(() => { }); await deleteDoc(doc(db, "journey", id)); toast("اتمسحت."); }
   catch (e) { console.error(e); toast("معرفتش أمسحها.", true); }
+}
+
+
+/* =========================================================
+   لوحة الأدمن: الطلبة (إلغاء التسجيل) / كل الميموريز (تعديل ومسح) / الجيرني
+   - مفيش باسوردات بتتعرض: Firebase بيخزنها مشفّرة ومحدش يقدر يقراها (حتى الأدمن)
+   - الأدمن مالوش وصول لأي رسالة شات
+   ========================================================= */
+async function resetUser(p, u) {
+  if (!await confirmBox(`تلغي تسجيل ${title(p.name)}؟ هيقدر يسجل من الأول بباسورد جديد.`)) return false;
+  const k = slug(p.key);
+  try {
+    const s0 = await getDoc(doc(db, "resets", k)), ver = (s0.exists() ? (s0.data().ver || 0) : 0) + 1;
+    await setDoc(doc(db, "resets", k), { ver });
+    await deleteDoc(doc(db, "users", u.uid));
+    toast("اتلغى تسجيل " + first2(p.name));
+    if (await confirmBox("تمسح كمان كل الذكريات اللي رفعها؟")) {
+      const s2 = await getDocs(query(collection(db, "memories"), where("authorId", "==", u.uid)));
+      await Promise.all(s2.docs.map(d => purgeMemory(d.id))); toast("اتمسحت ذكرياته.");
+    }
+    return true;
+  } catch (e) { console.error(e); toast("معرفتش أكمل: " + (e.code || e.message), true); return false; }
+}
+function openAdmin() {
+  const m = modal(`<div class="eyebrow">Admin</div><h3 style="margin:6px 0 2px">Dashboard · لوحة التحكم</h3>
+    <div class="adm-tabs"><button class="btn sm on" data-t="users">Students · الطلبة</button><button class="btn sm" data-t="mem">Memories · الذكريات</button><button class="btn sm" data-t="jr">Journey</button></div>
+    <div id="admBody"></div>`, "wide");
+  const body = m.querySelector("#admBody"); let tab = "users", q = "", memsAll = null, editing = "";
+  const draw = async () => {
+    m.querySelectorAll(".adm-tabs .btn").forEach(b => b.classList.toggle("on", b.dataset.t === tab));
+    if (tab === "users") {
+      const n = PEOPLE.filter(p => usersByKey.has(p.key)).length, k = clean(q);
+      const rows = PEOPLE.filter(p => !k || p.key.includes(k)).map(p => { const u = usersByKey.get(p.key);
+        return `<div class="adm-row">${av(p.name, p.photo, 42)}<div class="tx"><b style="text-transform:capitalize">${esc(first2(p.name))}</b><small>${u ? "مسجّل · " + fmtDate(u.createdAt) : "لسه ماسجلش"}</small></div>${u ? `<button class="btn sm" data-reset="${esc(p.key)}">${ic("refresh")}Reset · إلغاء التسجيل</button>` : ""}</div>`; }).join("");
+      body.innerHTML = `<p class="ar adm-note">مسجّلين <b>${n}</b> من ${PEOPLE.length}. الباسوردات مش بتتعرض لأن Firebase بيخزنها مشفّرة وماحدش يقدر يقراها. لو حد نسي باسورده دوس <b>Reset</b> وهيسجل من الأول بباسورد جديد.</p>
+        <input id="admQ" class="adm-q" placeholder="Search · ابحث عن اسم" value="${esc(q)}">${rows}`;
+      const qi = body.querySelector("#admQ"); qi.oninput = () => { q = qi.value; const pos = qi.selectionStart; draw().then(() => { const x = body.querySelector("#admQ"); x.focus(); x.setSelectionRange(pos, pos); }); };
+    } else if (tab === "mem") {
+      if (!memsAll) { body.innerHTML = `<div class="hint" style="padding:20px">${ic("loader", "spin")}</div>`; try { const sn = await getDocs(query(collection(db, "memories"), orderBy("createdAt", "desc"))); memsAll = sn.docs.map(d => ({ id: d.id, ...d.data() })); } catch (e) { console.error(e); body.innerHTML = `<p class="ar adm-note">معرفتش أحمّل الذكريات.</p>`; return; } }
+      body.innerHTML = `<p class="ar adm-note">${memsAll.length} ذكرى. تقدر تعدّل الكابشن أو تمسح أي واحدة.</p>` + (memsAll.map(x => `<div class="adm-mem"><img src="${esc(x.thumb)}" alt="" loading="lazy"><div class="tx"><b style="text-transform:capitalize">${esc(first2(x.authorName))}</b><small>${fmtDate(x.createdAt)}</small>${editing === x.id ? `<textarea id="admCap" rows="3" maxlength="300" dir="auto">${esc(x.caption)}</textarea><div class="adm-act"><button class="btn primary sm" data-save="${x.id}">Save</button><button class="btn sm" data-cancel>Cancel</button></div>` : `<p dir="auto">${esc(x.caption)}</p>`}</div>${editing === x.id ? "" : `<div class="adm-act col"><button class="btn sm" data-edit="${x.id}">${ic("edit")}Edit</button><button class="btn sm" data-del="${x.id}" style="color:var(--danger)">${ic("trash")}Delete</button></div>`}</div>`).join("") || `<div class="hint" style="padding:20px">مفيش ذكريات لسه.</div>`);
+    } else {
+      const list = [...journey].sort((a, b) => ms(b.createdAt) - ms(a.createdAt));
+      body.innerHTML = `<p class="ar adm-note">للإضافة: دوس على أي سنة في قسم Journey واختار Add. هنا تقدر تمسح.</p>` + (list.map(j => `<div class="adm-mem">${j.thumb ? `<img src="${esc(j.thumb)}" alt="" loading="lazy">` : `<div class="adm-ph">${ic("route")}</div>`}<div class="tx"><b>${esc(JOURNEY[j.year]?.year || "")} · ${esc(JOURNEY[j.year]?.date || "")}</b><small>${fmtDate(j.createdAt)}</small><p dir="auto">${esc(j.text || "")}</p></div><div class="adm-act col"><button class="btn sm" data-jdel="${j.id}" style="color:var(--danger)">${ic("trash")}Delete</button></div></div>`).join("") || `<div class="hint" style="padding:20px">مفيش حاجة في الجيرني لسه.</div>`);
+    }
+  };
+  m.addEventListener("click", async e => {
+    const t = e.target.closest("[data-t]"); if (t && t.closest(".adm-tabs")) { tab = t.dataset.t; editing = ""; return draw(); }
+    const r = e.target.closest("[data-reset]");
+    if (r) { const p = PBYKEY.get(r.dataset.reset), u = usersByKey.get(r.dataset.reset); if (p && u && await resetUser(p, u)) { memsAll = null; draw(); } return; }
+    const ed = e.target.closest("[data-edit]"); if (ed) { editing = ed.dataset.edit; return draw(); }
+    if (e.target.closest("[data-cancel]")) { editing = ""; return draw(); }
+    const sv = e.target.closest("[data-save]");
+    if (sv) { const t2 = body.querySelector("#admCap").value.trim(); if (!t2) return toast("الكابشن مينفعش يبقى فاضي.", true);
+      try { await updateDoc(doc(db, "memories", sv.dataset.save), { caption: t2, edited: true }); const x = memsAll.find(z => z.id === sv.dataset.save); x.caption = t2; editing = ""; toast("اتعدّل الكابشن."); draw(); } catch (err) { console.error(err); toast("معرفتش أعدّل.", true); } return; }
+    const dl = e.target.closest("[data-del]");
+    if (dl) { if (!await confirmBox("تمسح الذكرى دي؟")) return; try { await purgeMemory(dl.dataset.del); memsAll = memsAll.filter(z => z.id !== dl.dataset.del); toast("اتمسحت."); draw(); } catch (err) { console.error(err); toast("معرفتش أمسحها.", true); } return; }
+    const jd = e.target.closest("[data-jdel]");
+    if (jd) { await deleteJourneyItem(jd.dataset.jdel); setTimeout(draw, 400); }
+  });
+  draw();
 }
 
 /* =========================================================
@@ -820,6 +936,7 @@ document.addEventListener("click", e => {
   const v = t.dataset.v; $("menu").hidden = true; $("gsPop").hidden = true;
   switch (t.dataset.act) {
     case "share": openUpload(); break;
+    case "admin": if (isAdmin()) { $$(".modal").forEach(m => m.close()); openAdmin(); } break;
     case "zoom": if (viewer && viewer.id === v) { $("pvIn")?.focus(); } else openMemory(v, { focus: !!t.dataset.focus }); break;
     case "zoomj": openPhoto("j:" + v); break;
     case "memmenu": memMenu(v); break;
