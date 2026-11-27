@@ -41,7 +41,8 @@ if (window.PH_FB.demo) $("demoBar").hidden = false;
 /* ---------- الحالة ---------- */
 let me = null, registering = false, started = false;
 const users = new Map(), usersByKey = new Map(), memCache = new Map();
-let memories = [], memLimit = 24, memUnsub = null;
+const isMob = () => matchMedia("(max-width:760px)").matches;
+let memories = [], memLimit = isMob() ? 12 : 24, memStep = isMob() ? 12 : 24, memUnsub = null;
 let chats = [], current = null, threadUnsub = null, threadMsgs = [], threadFor = null;
 let futUnsub = null, unsubs = [];
 let filterJoined = false, page = 1;
@@ -291,6 +292,7 @@ async function startApp(profile, justRegistered) {
   if (justRegistered) { toast("أهلاً بيك في Pharmily! بروفايلك جاهز."); }
 }
 function stopApp() {
+  closeMemAll();
   unsubs.forEach(f => f()); unsubs = []; memUnsub?.(); memUnsub = null; threadUnsub?.(); threadUnsub = null;
   users.clear(); usersByKey.clear(); memories = []; journey = []; chats = []; current = null; me = null; started = false; seenMem.clear();
   flags.mem = flags.chats = false; myMemCount = 0; renderJourney.sig = ""; closeViewer(true); yearOpen = null;
@@ -321,7 +323,7 @@ function renderPeople() {
     const role = o.p.role, rcls = role ? ` role-${role}` : "";
     const badge = role === "admin" ? `<span class="rtag">${ic("sparkles")}Admin</span>` : role === "core" ? `<span class="rtag">${ic("sparkles")}Core Team</span>` : "";
     const fx = role ? `<span class="aura" aria-hidden="true"></span><span class="spk s1"></span><span class="spk s2"></span><span class="spk s3"></span>` : "";
-    return `<button class="st lift tilt${rcls} ${o.u ? "" : "off"}" data-act="profile" data-v="${esc(o.p.key)}">${fx}<div class="av" style="position:relative">${o.u ? '<span class="dot" title="Joined"></span>' : ""}<span>${esc(initials(o.p.name))}</span>${photo ? `<img src="${esc(photo)}" alt="" loading="lazy" onerror="this.remove()">` : ""}</div><b>${esc(first2(o.p.name))}</b><i>${esc(nick)}</i>${badge}</button>`;
+    return `<button class="st lift tilt${rcls} ${o.u ? "" : "off"}" data-act="profile" data-v="${esc(o.p.key)}">${fx}<div class="av" style="position:relative">${o.u ? '<span class="dot" title="Joined"></span>' : ""}<span>${esc(initials(o.p.name))}</span>${photo ? `<img src="${esc(photo)}" alt="" loading="lazy" decoding="async" onerror="this.remove()">` : ""}</div><b>${esc(first2(o.p.name))}</b><i>${esc(nick)}</i>${badge}</button>`;
   }).join(""));
   put($("pages"), n > 1 ? Array.from({ length: n }, (_, i) => `<button class="btn sm ${i + 1 === page ? "on" : ""}" data-p="${i + 1}">${i + 1}</button>`).join("") : "");
   $("fAll").classList.toggle("on", !filterJoined); $("fJoined").classList.toggle("on", filterJoined);
@@ -338,7 +340,7 @@ function listenMemories() {
     memories = snap.docs.map(d => ({ id: d.id, ...d.data() })); memories.forEach(m => memCache.set(m.id, m)); renderAll(); refreshViewer();
   }, fail);
 }
-$("memMore").onclick = () => { memLimit += 24; listenMemories(); };
+$("memMore").onclick = () => { memLimit += memStep; listenMemories(); };
 
 /* ---------- الرياكتات (زي فيسبوك) ---------- */
 const RX = [
@@ -431,19 +433,49 @@ function memCard(m, isNew) {
       ${own ? `<button class="circle dots" data-act="memmenu" data-v="${m.id}" aria-label="Options">${ic("dots")}</button>` : ""}
     </div>
     ${m.caption ? `<p class="cap">${esc(m.caption)}</p>` : ""}
-    <button class="pic" data-act="zoom" data-v="${m.id}" aria-label="Open photo"><img src="${esc(m.thumb)}" alt="" loading="lazy"></button>
+    <button class="pic" data-act="zoom" data-v="${m.id}" aria-label="Open photo"><img src="${esc(m.thumb)}" alt="" loading="lazy" decoding="async"></button>
     ${statsHtml(m)}${actsHtml(m)}
   </article>`;
 }
 function renderMemories() {
-  const box = $("mgrid");
+  const box = $("mgrid"), mob = isMob();
   if (!memories.length) put(box, `<div class="empty-box"><span style="color:var(--g)">${ic("image")}</span><b class="ar" style="color:var(--g2)">لسه مفيش ذكريات. خليك أول واحد!</b><button class="btn primary" data-act="share">${ic("camera")}Share a memory</button></div>`);
   else {
-    const html = memories.map(m => { const n = !seenMem.has(m.id) && seenMem.size > 0; return memCard(m, n); }).join("");
+    // الموبايل: أحدث 8 بس في الشريط الجانبي (أسرع)، والباقي في View all
+    const list = mob ? memories.slice(0, 8) : memories;
+    const html = list.map(m => { const n = !seenMem.has(m.id) && seenMem.size > 0; return memCard(m, n); }).join("");
     put(box, html); memories.forEach(m => seenMem.add(m.id));
   }
   $("memMore").hidden = memories.length < memLimit;
+  $("memAllWrap").hidden = !memories.length;
+  fillMemAll();
 }
+/* ---------- View all (الموبايل): شاشة كاملة بكل الذكريات ---------- */
+let memAllEl = null;
+const memAllOpen = () => !!(memAllEl && document.body.contains(memAllEl));
+function fillMemAll() {
+  if (!memAllOpen()) return;
+  put(memAllEl.querySelector("#maGrid"), memories.map(m => memCard(m, false)).join(""));
+  memAllEl.querySelector("#maCount").textContent = memories.length + (memories.length >= memLimit ? "+" : "") + " memories";
+  memAllEl.querySelector("#maMore").hidden = memories.length < memLimit;
+}
+function openMemAll() {
+  if (memAllOpen()) return;
+  const el = memAllEl = document.createElement("div"); el.className = "maov";
+  el.innerHTML = `<div class="ma-top"><div><b>All memories · كل الذكريات</b><small id="maCount"></small></div><button class="circle" data-maclose aria-label="Close">${ic("x")}</button></div>
+    <div class="ma-grid" id="maGrid"></div><div class="more"><button class="btn" id="maMore" hidden>Load more<svg class="ic"><use href="#i-chev-r"/></svg></button></div>`;
+  document.body.append(el); document.body.style.overflow = "hidden"; document.body.classList.add("ma-open");
+  el.querySelector("#maMore").onclick = () => { memLimit += memStep; listenMemories(); };
+  el.addEventListener("click", e => { if (e.target.closest("[data-maclose]")) closeMemAll(); });
+  fillMemAll(); raf(() => el.classList.add("in"));
+}
+function closeMemAll() {
+  if (!memAllOpen()) return; const el = memAllEl; el.classList.remove("in"); document.body.style.overflow = ""; document.body.classList.remove("ma-open");
+  setTimeout(() => el.remove(), 320);
+}
+$("memAll").onclick = openMemAll;
+document.addEventListener("keydown", e => { if (e.key === "Escape" && memAllOpen() && !document.querySelector(".pv,.modal,.lb")) closeMemAll(); });
+matchMedia("(max-width:760px)").addEventListener?.("change", () => { if (me) { closeMemAll(); renderMemories(); } });
 function renderRail() {
   const list = memories.slice(0, 8);
   const html = list.length ? list.map(m => `<button class="mc lift tilt" data-act="zoom" data-v="${m.id}" style="background-image:url('${esc(m.thumb)}')"><span class="t">${esc(m.caption)}</span><span class="by">${av(m.authorName, users.get(m.authorId)?.photo, 24)}<span style="text-transform:capitalize">${esc(first2(m.authorName))}</span></span></button>`).join("")

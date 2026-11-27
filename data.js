@@ -33,7 +33,6 @@ const STUDENTS = [
   { name: "rawan anter", nickname: "", photo: "photos/rawan-anter.jpg", role: "core" },
   { name: "zahwa mohamed", nickname: "", photo: "photos/zahwa-mohamed.jpg", role: "core" },
   { name: "mahmoud sherif", nickname: "", photo: "photos/mahmoud-sherif.jpg", role: "core" },
-  { name: "Abdelrhman Ehab", nickname: "", photo: "photos/Abdelrhman.png" },
   { name: "amal yasser", nickname: "", photo: "photos/amal-yasser.jpg" },
   { name: "shahd mamdouh", nickname: "", photo: "photos/shahd-mamdouh.jpg" },
   { name: "ahmed attia", nickname: "", photo: "photos/ahmed-attia.jpg" },
@@ -108,7 +107,8 @@ const STUDENTS = [
   { name: "mostafa Abdullah", nickname: "", photo: "photos/mostafa-abdullah.jpg" },
   { name: "shahd rezk", nickname: "", photo: "photos/shahd-rezk.jpg" },
   { name: "momen mohamed", nickname: "", photo: "photos/momen-mohamed.jpg" },
-  { name: "eman fathy", nickname: "", photo: "photos/eman-fathy.jpg" }
+  { name: "eman fathy", nickname: "", photo: "photos/eman-fathy.jpg" },
+  { name: "Abdelrhman Ehab", nickname: "", photo: "" }
 ];
 
 // 3) الـ Journey: 6 سنين. كل سنة فيها عنوان ووصف وصور.

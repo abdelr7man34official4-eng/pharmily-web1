@@ -107,9 +107,33 @@ body{overflow-x:hidden;overflow-x:clip;max-width:100vw}
 .panel-foot .btn{width:100%}
 
 /* ---------- الذكريات: فيد زي تطبيقات التواصل ---------- */
-.mgrid{grid-template-columns:1fr;gap:14px;margin:0 -4px}
-.mem{padding:12px 12px 6px;border-radius:24px}
-.mem .pic{aspect-ratio:1/1;border-radius:18px;cursor:pointer}
+/* الميموريز على الموبايل: شريط أفقي (اتنين ظاهرين جنب بعض) + View all */
+.mgrid{display:flex;gap:12px;margin:0 -14px;padding:2px 14px 14px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-inline:14px;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none;align-items:stretch}
+.mgrid::-webkit-scrollbar{display:none}
+.mgrid>.mem{flex:0 0 44%;scroll-snap-align:start;content-visibility:visible}
+.mgrid>.empty-box{flex:1 0 100%}
+.mem{padding:9px 9px 6px;border-radius:22px;gap:8px}
+.mem .pic{order:0;aspect-ratio:4/5;border-radius:16px;cursor:pointer}
+.mem .mh{order:1}.mem .cap{order:2}.mem .stats{order:3}
+.mem .mh .av{--sz:30px!important}.mem .who b{font-size:.78rem}.mem .who small{font-size:.62rem}
+.mem .cap{font-size:.8rem;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;padding:0 2px}
+.mem .acts{display:none}
+.mem .stats{font-size:.7rem;min-height:0}
+#memMore{display:none}
+.memall-wrap{display:flex;justify-content:center;margin-top:6px}
+.memall-wrap .btn{width:100%;justify-content:center}
+.maov{position:fixed;inset:0;z-index:110;background:var(--bg);overflow-y:auto;overscroll-behavior:contain;padding:calc(env(safe-area-inset-top,0px) + 8px) 14px calc(env(safe-area-inset-bottom,0px) + 28px);opacity:0;transform:translateY(28px);transition:opacity .3s var(--ease),transform .45s var(--ease)}
+.maov.in{opacity:1;transform:none}
+.ma-top{display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:0;z-index:3;padding:10px 0 12px;background:linear-gradient(var(--bg) 78%,transparent)}
+.ma-top b{display:block;font-family:var(--display);font-size:1.15rem;color:var(--g2);font-weight:600}
+.ma-top small{opacity:.65;font-size:.78rem}
+.ma-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}
+.ma-grid>.mem{content-visibility:auto;contain-intrinsic-size:auto 330px}
+.maov .more{display:flex;justify-content:center;margin-top:16px}
+/* أخف على الموبايل: من غير أنيميشن مستمر على كروت الأدمن */
+.st.role-admin,.st.role-core{animation:none}
+.st .aura{animation:none}
+.st .spk{animation-duration:3.6s}
 .mem:hover .pic img{transform:none}
 .act{padding:.85em .4em;font-size:.92rem}
 .rxs{padding:6px 8px 6px 4px}
@@ -222,3 +246,5 @@ footer h2{font-size:1.8rem}
 
 .hero p{margin-top:2px;text-shadow:0 1px 14px rgba(0,0,0,.35)}
 .hero .art svg{scale:1}
+
+body.ma-open #partyBtn{display:none!important}
