@@ -138,3 +138,162 @@ const LETTER_SIGN = "Until we meet again 💗\nPharmily - Clinical Pharmacy - Cl
 
 // 5) Future Me: بعد كام سنة تتفتح الرسالة
 const FUTURE_YEARS = 5;
+
+// Journey photos (static): الصور دي بتتحمل من ملفات الموقع نفسه (سريعة وخفيفة)
+// الكابشن = اسم الصورة. الأدمن بس يقدر يعدّله من الموقع.
+const JOURNEY_PHOTOS = [
+ {
+  "id": "s1-01",
+  "year": 0,
+  "full": "photos/journey/s1-01.webp",
+  "thumb": "photos/journey/s1-01-t.webp",
+  "caption": ""
+ },
+ {
+  "id": "s1-02",
+  "year": 0,
+  "full": "photos/journey/s1-02.webp",
+  "thumb": "photos/journey/s1-02-t.webp",
+  "caption": "✨11/4/2023✨ Ramadan iftar 🤩💗"
+ },
+ {
+  "id": "s1-03",
+  "year": 0,
+  "full": "photos/journey/s1-03.webp",
+  "thumb": "photos/journey/s1-03-t.webp",
+  "caption": "✨22/1/2023✨"
+ },
+ {
+  "id": "s1-04",
+  "year": 0,
+  "full": "photos/journey/s1-04.webp",
+  "thumb": "photos/journey/s1-04-t.webp",
+  "caption": "✨22/3/2023✨ Ramadan decorations 🌙💗"
+ },
+ {
+  "id": "s2-01",
+  "year": 1,
+  "full": "photos/journey/s2-01.webp",
+  "thumb": "photos/journey/s2-01-t.webp",
+  "caption": ""
+ },
+ {
+  "id": "s2-02",
+  "year": 1,
+  "full": "photos/journey/s2-02.webp",
+  "thumb": "photos/journey/s2-02-t.webp",
+  "caption": ""
+ },
+ {
+  "id": "s2-03",
+  "year": 1,
+  "full": "photos/journey/s2-03.webp",
+  "thumb": "photos/journey/s2-03-t.webp",
+  "caption": ""
+ },
+ {
+  "id": "s2-04",
+  "year": 1,
+  "full": "photos/journey/s2-04.webp",
+  "thumb": "photos/journey/s2-04-t.webp",
+  "caption": ""
+ },
+ {
+  "id": "s2-05",
+  "year": 1,
+  "full": "photos/journey/s2-05.webp",
+  "thumb": "photos/journey/s2-05-t.webp",
+  "caption": ""
+ },
+ {
+  "id": "s3-01",
+  "year": 2,
+  "full": "photos/journey/s3-01.webp",
+  "thumb": "photos/journey/s3-01-t.webp",
+  "caption": ""
+ },
+ {
+  "id": "s3-02",
+  "year": 2,
+  "full": "photos/journey/s3-02.webp",
+  "thumb": "photos/journey/s3-02-t.webp",
+  "caption": ""
+ },
+ {
+  "id": "s3-03",
+  "year": 2,
+  "full": "photos/journey/s3-03.webp",
+  "thumb": "photos/journey/s3-03-t.webp",
+  "caption": ""
+ },
+ {
+  "id": "s3-04",
+  "year": 2,
+  "full": "photos/journey/s3-04.webp",
+  "thumb": "photos/journey/s3-04-t.webp",
+  "caption": ""
+ },
+ {
+  "id": "s3-05",
+  "year": 2,
+  "full": "photos/journey/s3-05.webp",
+  "thumb": "photos/journey/s3-05-t.webp",
+  "caption": ""
+ },
+ {
+  "id": "s3-06",
+  "year": 2,
+  "full": "photos/journey/s3-06.webp",
+  "thumb": "photos/journey/s3-06-t.webp",
+  "caption": ""
+ },
+ {
+  "id": "s4-01",
+  "year": 3,
+  "full": "photos/journey/s4-01.webp",
+  "thumb": "photos/journey/s4-01-t.webp",
+  "caption": ""
+ },
+ {
+  "id": "s4-02",
+  "year": 3,
+  "full": "photos/journey/s4-02.webp",
+  "thumb": "photos/journey/s4-02-t.webp",
+  "caption": ""
+ },
+ {
+  "id": "s4-03",
+  "year": 3,
+  "full": "photos/journey/s4-03.webp",
+  "thumb": "photos/journey/s4-03-t.webp",
+  "caption": ""
+ },
+ {
+  "id": "s4-04",
+  "year": 3,
+  "full": "photos/journey/s4-04.webp",
+  "thumb": "photos/journey/s4-04-t.webp",
+  "caption": ""
+ },
+ {
+  "id": "s4-05",
+  "year": 3,
+  "full": "photos/journey/s4-05.webp",
+  "thumb": "photos/journey/s4-05-t.webp",
+  "caption": ""
+ },
+ {
+  "id": "s4-06",
+  "year": 3,
+  "full": "photos/journey/s4-06.webp",
+  "thumb": "photos/journey/s4-06-t.webp",
+  "caption": ""
+ },
+ {
+  "id": "s4-07",
+  "year": 3,
+  "full": "photos/journey/s4-07.webp",
+  "thumb": "photos/journey/s4-07-t.webp",
+  "caption": ""
+ }
+];

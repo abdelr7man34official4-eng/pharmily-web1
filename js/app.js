@@ -90,12 +90,14 @@ async function bitmap(file) {
   if (window.createImageBitmap) { try { return await createImageBitmap(file, { imageOrientation: "from-image" }); } catch (e) { } }
   return await new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = URL.createObjectURL(file); });
 }
-async function resizeFit(file, max, q) {
+const WEBP = (() => { try { return document.createElement("canvas").toDataURL("image/webp").startsWith("data:image/webp"); } catch { return false; } })();
+async function resizeFit(file, max, q, cap = 880000) {
   const b = await bitmap(file), w = b.width || b.naturalWidth, h = b.height || b.naturalHeight, k = Math.min(1, max / Math.max(w, h));
   const c = document.createElement("canvas"); c.width = Math.round(w * k); c.height = Math.round(h * k);
-  const x = c.getContext("2d"); x.fillStyle = "#000"; x.fillRect(0, 0, c.width, c.height); x.drawImage(b, 0, 0, c.width, c.height);
-  let out = c.toDataURL("image/jpeg", q);
-  while (out.length > 880000 && q > .35) { q -= .1; out = c.toDataURL("image/jpeg", q); }
+  const x = c.getContext("2d"); x.fillStyle = "#000"; x.fillRect(0, 0, c.width, c.height); x.imageSmoothingQuality = "high"; x.drawImage(b, 0, 0, c.width, c.height);
+  const mime = WEBP ? "image/webp" : "image/jpeg";
+  let out = c.toDataURL(mime, q);
+  while (out.length > cap && q > .35) { q -= .08; out = c.toDataURL(mime, q); }
   return out;
 }
 async function resizeSquare(file, size, q) {
@@ -282,6 +284,7 @@ async function startApp(profile, justRegistered) {
     renderAll();
   }, fail));
   listenMemories(); listenJourney();
+  unsubs.push(onSnapshot(collection(db, "journeyCaps"), snap => { capsMap.clear(); snap.forEach(d => capsMap.set(d.id, d.data())); renderJourney(); fillYear(); }, () => { }));
   if (!me.isAdmin) {   // الأدمن مالوش شات ولا Future Me ولا ذكريات باسمه
     unsubs.push(onSnapshot(query(collection(db, "memories"), where("authorId", "==", me.uid), limit(1)), snap => { myMemCount = snap.size; flags.mem = true; renderAll(); }, fail));
     unsubs.push(onSnapshot(query(collection(db, "chats"), where("members", "array-contains", me.uid)), onChats, fail));
@@ -292,7 +295,7 @@ async function startApp(profile, justRegistered) {
   if (justRegistered) { toast("أهلاً بيك في Pharmily! بروفايلك جاهز."); }
 }
 function stopApp() {
-  closeMemAll();
+  closeMemAll(true);
   unsubs.forEach(f => f()); unsubs = []; memUnsub?.(); memUnsub = null; threadUnsub?.(); threadUnsub = null;
   users.clear(); usersByKey.clear(); memories = []; journey = []; chats = []; current = null; me = null; started = false; seenMem.clear();
   flags.mem = flags.chats = false; myMemCount = 0; renderJourney.sig = ""; closeViewer(true); yearOpen = null;
@@ -450,32 +453,42 @@ function renderMemories() {
   $("memAllWrap").hidden = !memories.length;
   fillMemAll();
 }
-/* ---------- View all (الموبايل): شاشة كاملة بكل الذكريات ---------- */
-let memAllEl = null;
-const memAllOpen = () => !!(memAllEl && document.body.contains(memAllEl));
+/* ---------- View all: شاشة كاملة خفيفة بكل الذكريات (موبايل وكمبيوتر) ---------- */
+let memAllEl = null, maShown = 0, maIO = null, maBusy = false, maWait = false;
+const MA_BATCH = 24, memAllOpen = () => !!(memAllEl && document.body.contains(memAllEl));
+const miniCard = m => `<article class="mini"><button class="pic" data-act="zoom" data-v="${m.id}" aria-label="Open memory"><img src="${esc(m.thumb)}" alt="" loading="lazy" decoding="async"></button><div class="mi-tx">${m.caption ? `<p dir="auto">${esc(m.caption)}</p>` : ""}<small>${esc(first2(m.authorName))} · ${fmtDate(m.createdAt)}</small></div></article>`;
 function fillMemAll() {
-  if (!memAllOpen()) return;
-  put(memAllEl.querySelector("#maGrid"), memories.map(m => memCard(m, false)).join(""));
+  if (!memAllOpen()) return; maBusy = false;
+  if (maWait && memories.length > maShown) { maShown += MA_BATCH; maWait = false; }
+  put(memAllEl.querySelector("#maGrid"), memories.slice(0, maShown).map(miniCard).join(""));
+  const more = maShown < memories.length || memories.length >= memLimit;
   memAllEl.querySelector("#maCount").textContent = memories.length + (memories.length >= memLimit ? "+" : "") + " memories";
-  memAllEl.querySelector("#maMore").hidden = memories.length < memLimit;
+  memAllEl.querySelector("#maSent").hidden = !more;
+}
+function maNext() {
+  if (!memAllOpen() || maBusy) return;
+  if (maShown < memories.length) { maShown += MA_BATCH; fillMemAll(); }
+  else if (memories.length >= memLimit) { maBusy = true; maWait = true; memLimit += memStep; listenMemories(); setTimeout(() => { maBusy = false; maWait = false; }, 4000); }
 }
 function openMemAll() {
   if (memAllOpen()) return;
-  const el = memAllEl = document.createElement("div"); el.className = "maov";
-  el.innerHTML = `<div class="ma-top"><div><b>All memories · كل الذكريات</b><small id="maCount"></small></div><button class="circle" data-maclose aria-label="Close">${ic("x")}</button></div>
-    <div class="ma-grid" id="maGrid"></div><div class="more"><button class="btn" id="maMore" hidden>Load more<svg class="ic"><use href="#i-chev-r"/></svg></button></div>`;
-  document.body.append(el); document.body.style.overflow = "hidden"; document.body.classList.add("ma-open");
-  el.querySelector("#maMore").onclick = () => { memLimit += memStep; listenMemories(); };
-  el.addEventListener("click", e => { if (e.target.closest("[data-maclose]")) closeMemAll(); });
-  fillMemAll(); raf(() => el.classList.add("in"));
+  try {
+    const el = memAllEl = document.createElement("div"); el.className = "maov"; maShown = MA_BATCH; maBusy = false; maWait = false;
+    el.innerHTML = `<div class="ma-wrap"><div class="ma-top"><div><b>All memories · كل الذكريات</b><small id="maCount"></small></div><button class="circle" data-maclose aria-label="Close">${ic("x")}</button></div>
+      <div class="ma-grid" id="maGrid"></div><div class="ma-sent" id="maSent" hidden><button class="btn" id="maMore">Load more<svg class="ic"><use href="#i-chev-r"/></svg></button></div></div>`;
+    document.body.append(el); document.documentElement.classList.add("noscroll"); document.body.classList.add("ma-open");
+    el.addEventListener("click", e => { if (e.target.closest("[data-maclose]")) closeMemAll(); });
+    el.querySelector("#maMore").onclick = maNext;
+    fillMemAll(); raf(() => el.classList.add("in"));
+    if ("IntersectionObserver" in window) { maIO = new IntersectionObserver(es => { if (es.some(x => x.isIntersecting)) maNext(); }, { root: el, rootMargin: "600px 0px" }); maIO.observe(el.querySelector("#maSent")); }
+  } catch (err) { console.error(err); closeMemAll(true); }
 }
-function closeMemAll() {
-  if (!memAllOpen()) return; const el = memAllEl; el.classList.remove("in"); document.body.style.overflow = ""; document.body.classList.remove("ma-open");
-  setTimeout(() => el.remove(), 320);
+function closeMemAll(now) {
+  maIO?.disconnect(); maIO = null; document.body.classList.remove("ma-open"); if (!viewer) document.documentElement.classList.remove("noscroll");
+  if (!memAllEl) return; const el = memAllEl; memAllEl = null; el.classList.remove("in"); if (now) el.remove(); else setTimeout(() => el.remove(), 300);
 }
 $("memAll").onclick = openMemAll;
 document.addEventListener("keydown", e => { if (e.key === "Escape" && memAllOpen() && !document.querySelector(".pv,.modal,.lb")) closeMemAll(); });
-matchMedia("(max-width:760px)").addEventListener?.("change", () => { if (me) { closeMemAll(); renderMemories(); } });
 function renderRail() {
   const list = memories.slice(0, 8);
   const html = list.length ? list.map(m => `<button class="mc lift tilt" data-act="zoom" data-v="${m.id}" style="background-image:url('${esc(m.thumb)}')"><span class="t">${esc(m.caption)}</span><span class="by">${av(m.authorName, users.get(m.authorId)?.photo, 24)}<span style="text-transform:capitalize">${esc(first2(m.authorName))}</span></span></button>`).join("")
@@ -494,7 +507,7 @@ async function openPhoto(key) {
   const l = document.createElement("div"); l.className = "lb";
   l.innerHTML = `<button class="circle x" aria-label="Close">${ic("x")}</button><div class="lb-in">${txt ? `<div class="cap">${esc(txt)}</div>` : ""}<img src="${esc(m.thumb)}" alt=""><div class="by">${av(m.authorName, u?.photo, 32)}<span>${esc(first2(m.authorName))}</span></div></div><span class="load">${ic("loader", "spin")}</span>`;
   l.onclick = e => { if (!e.target.closest("img,.by,.cap") || e.target.closest(".x")) closeLb(); };
-  document.body.append(l); raf(() => l.classList.add("in"));
+  document.body.append(l); raf(() => l.classList.add("in")); window.attachZoom?.(l.querySelector("img"));
   try {
     if (!m.full) { const s = await getDoc(doc(db, m._col || "memories", m.id, "blobs", "full")); if (s.exists()) m.full = s.data().data; }
     if (m.full) l.querySelector("img").src = m.full;
@@ -506,7 +519,7 @@ async function openPhoto(key) {
 let viewer = null;
 function closeViewer(now) {
   if (!viewer) return; const v = viewer; viewer = null; v.unsub?.();
-  v.el.classList.remove("in"); document.documentElement.classList.remove("noscroll");
+  v.el.classList.remove("in"); if (!memAllOpen()) document.documentElement.classList.remove("noscroll");
   if (now) v.el.remove(); else setTimeout(() => v.el.remove(), 300);
 }
 function viewerTop(m) {
@@ -543,6 +556,7 @@ async function openMemory(id, opts = {}) {
   const inp = el.querySelector("#pvIn"), send = el.querySelector(".send");
   inp.oninput = () => send.disabled = !inp.value.trim();
   el.querySelector("#pvComp").onsubmit = sendComment;
+  window.attachZoom?.(el.querySelector(".pv-img img"));
   put($("pvTop"), viewerTop(m)); renderComments();
   viewer.unsub = onSnapshot(query(collection(db, "memories", id, "comments"), orderBy("createdAt", "asc"), limit(200)), snap => {
     if (!viewer || viewer.id !== id) return;
@@ -607,7 +621,7 @@ function openUpload() {
     if (!file || !file.type.startsWith("image/")) return;
     m.querySelector("#upErr").textContent = "";
     try {
-      [full, thumb] = await Promise.all([resizeFit(file, 1400, .78), resizeFit(file, 480, .72)]);
+      [full, thumb] = await Promise.all([resizeFit(file, 1280, .76, 420000), resizeFit(file, 420, .7, 45000)]);
       m.querySelector("#upPrev img").src = thumb; m.querySelector("#upPrev").hidden = false; m.querySelector("#upDrop").hidden = true; sync();
     } catch { m.querySelector("#upErr").textContent = "الصورة دي مش مدعومة. جرب JPG أو PNG."; }
   };
@@ -644,6 +658,10 @@ async function deleteMemory(id) {
    Our Journey: كل سنة فيها صور وذكريات وأحداث الدفعة بتضيفها
    ========================================================= */
 let journey = [], yearOpen = null;
+const STATIC_J = typeof JOURNEY_PHOTOS !== "undefined" ? JOURNEY_PHOTOS : [], capsMap = new Map();
+const jCap = st => { const c = capsMap.get(st.id); return c && typeof c.caption === "string" ? c.caption : st.caption; };
+const jHidden = st => !!capsMap.get(st.id)?.hidden;
+const jStatic = i => STATIC_J.filter(st => st.year === i && !jHidden(st));
 function listenJourney() {
   unsubs.push(onSnapshot(query(collection(db, "journey"), orderBy("createdAt", "desc"), limit(300)), snap => {
     journey = snap.docs.map(d => ({ id: d.id, _col: "journey", ...d.data() }));
@@ -653,8 +671,8 @@ function listenJourney() {
 }
 function renderJourney() {
   const el = $("pk"); if (!el) return;
-  const cnt = i => journey.filter(j => j.year === i).length + JOURNEY[i].photos.length;
-  const cover = i => { const j = journey.find(x => x.year === i && x.thumb); return j ? j.thumb : (JOURNEY[i].photos[0] || ""); };
+  const cnt = i => journey.filter(j => j.year === i).length + jStatic(i).length + JOURNEY[i].photos.length;
+  const cover = i => { const st = jStatic(i)[0]; if (st) return st.thumb; const j = journey.find(x => x.year === i && x.thumb); return j ? j.thumb : (JOURNEY[i].photos[0] || ""); };
   const sig = JSON.stringify(JOURNEY.map((y, i) => [cover(i).length, cnt(i)]));
   if (renderJourney.sig === sig) return; renderJourney.sig = sig;
   el.innerHTML = `<div class="lead pin"><div><div class="eyebrow">2022 — 2028</div><h2 style="margin-top:10px">Five years, <em>one story</em></h2><p class="ar">يمكن السنين عدّت أسرع مما تمنّينا بس كل سنة سابت جوانا حكاية وكل حكاية تستحق نرجعلها تاني، دوس على أي سنة وشوف رحلتنا فيها 💗</p></div>${ic("route", "lg")}</div>` +
@@ -669,14 +687,37 @@ function openYear(i) {
 function fillYear() {
   if (!yearOpen) return;
   if (!document.body.contains(yearOpen.m)) { yearOpen = null; return; }
-  const i = yearOpen.i, y = JOURNEY[i];
+  const i = yearOpen.i, y = JOURNEY[i], adm = isAdmin(), ed = yearOpen.editing || "";
+  const txtBlock = (key, text) => ed === key
+    ? `<textarea class="jedit" rows="3" maxlength="600" dir="auto" placeholder="اكتب الكابشن…">${esc(text)}</textarea><div class="pf-act" style="margin:8px 0 0"><button class="btn primary sm" data-act="jsave" data-v="${esc(key)}">${ic("check")}Save</button><button class="btn sm" data-act="jcancel">Cancel</button></div>`
+    : (text ? `<p dir="auto">${esc(text)}</p>` : "");
+  const cbtn = (act, key, icon, label) => `<button class="circle" data-act="${act}" data-v="${esc(key)}" aria-label="${label}" title="${label}" style="width:34px;height:34px">${ic(icon)}</button>`;
+  const stat = jStatic(i).map(st => {
+    const text = jCap(st); memCache.set("s:" + st.id, { id: st.id, thumb: st.thumb, full: st.full, text, authorName: "Pharmily 16", authorId: "", _col: "journey" });
+    return `<article class="jit"><button class="jpic" data-act="zoomj" data-v="s:${st.id}" aria-label="Open photo"><img src="${esc(st.thumb)}" alt="" loading="lazy" decoding="async"></button>
+      <div class="jtx">${txtBlock("s:" + st.id, text)}${adm && ed !== "s:" + st.id ? `<div class="by" style="gap:8px">${cbtn("jedit", "s:" + st.id, "edit", "Edit caption")}${cbtn("jhide", "s:" + st.id, "trash", "Hide photo")}</div>` : ""}</div></article>`;
+  }).join("");
   const list = journey.filter(j => j.year === i).sort((a, b) => ms(b.createdAt) - ms(a.createdAt));
-  const html = list.map(j => {
-    const u = users.get(j.authorId), own = j.authorId === me.uid || isAdmin();
-    return `<article class="jit">${j.thumb ? `<button class="jpic" data-act="zoomj" data-v="${j.id}" aria-label="Open photo"><img src="${esc(j.thumb)}" alt="" loading="lazy"></button>` : ""}
-      <div class="jtx">${j.text ? `<p dir="auto">${esc(j.text)}</p>` : ""}<div class="by">${av(j.authorName, u?.photo, 30)}<span><b>${esc(first2(j.authorName))}</b><small>${fmtDate(j.createdAt)}</small></span>${own ? `<button class="circle" data-act="deljit" data-v="${j.id}" aria-label="Delete" style="width:34px;height:34px;margin-inline-start:auto">${ic("trash")}</button>` : ""}</div></div></article>`;
-  }).join("") + (y.photos.length ? `<div class="ph">${y.photos.map(p => `<img src="${esc(p)}" alt="" loading="lazy">`).join("")}</div>` : "");
-  put(yearOpen.m.querySelector("#jList"), html || `<div class="empty-box" style="padding:30px 14px"><span style="color:var(--g)">${ic("sparkles")}</span><b class="ar" style="color:var(--g2)">لسه مفيش حاجة في السنة دي. ${isAdmin() ? "ضيف أول ذكرى!" : "قريب هيتضاف هنا حاجات حلوة 💗"}</b></div>`);
+  const dyn = list.map(j => {
+    const u = users.get(j.authorId), own = adm || j.authorId === me.uid;
+    return `<article class="jit">${j.thumb ? `<button class="jpic" data-act="zoomj" data-v="${j.id}" aria-label="Open photo"><img src="${esc(j.thumb)}" alt="" loading="lazy" decoding="async"></button>` : ""}
+      <div class="jtx">${txtBlock("j:" + j.id, j.text || "")}<div class="by">${av(j.authorName, u?.photo, 30)}<span><b>${esc(first2(j.authorName))}</b><small>${fmtDate(j.createdAt)}</small></span>${adm && ed !== "j:" + j.id ? `<span style="margin-inline-start:auto;display:flex;gap:8px">${cbtn("jedit", "j:" + j.id, "edit", "Edit caption")}${own ? cbtn("deljit", j.id, "trash", "Delete") : ""}</span>` : (own && !adm ? `<button class="circle" data-act="deljit" data-v="${j.id}" aria-label="Delete" style="width:34px;height:34px;margin-inline-start:auto">${ic("trash")}</button>` : "")}</div></div></article>`;
+  }).join("");
+  const html = stat + dyn + (y.photos.length ? `<div class="ph">${y.photos.map(p => `<img src="${esc(p)}" alt="" loading="lazy">`).join("")}</div>` : "");
+  put(yearOpen.m.querySelector("#jList"), html || `<div class="empty-box" style="padding:30px 14px"><span style="color:var(--g)">${ic("sparkles")}</span><b class="ar" style="color:var(--g2)">لسه مفيش حاجة في السنة دي. ${adm ? "ضيف أول ذكرى!" : "قريب هيتضاف هنا حاجات حلوة 💗"}</b></div>`);
+}
+async function saveJCap(key) {
+  if (!isAdmin() || !yearOpen) return; const ta = yearOpen.m.querySelector(".jedit"); if (!ta) return; const t = ta.value.trim();
+  try {
+    if (key.startsWith("s:")) await setDoc(doc(db, "journeyCaps", key.slice(2)), { caption: t }, { merge: true });
+    else await updateDoc(doc(db, "journey", key.slice(2)), { text: t });
+    yearOpen.editing = ""; toast("اتعدّل الكابشن ✨"); fillYear();
+  } catch (e) { console.error(e); toast("معرفتش أعدّل الكابشن.", true); }
+}
+async function hideStatic(key) {
+  if (!isAdmin()) return; if (!await confirmBox("تخفي الصورة دي من السنة؟ (تقدر ترجعها من لوحة الأدمن)")) return;
+  try { await setDoc(doc(db, "journeyCaps", key.slice(2)), { hidden: true }, { merge: true }); toast("اتخفت."); }
+  catch (e) { console.error(e); toast("معرفتش أخفيها.", true); }
 }
 function openJourneyAdd(i) {
   let full = "", thumb = ""; const y = JOURNEY[i];
@@ -692,7 +733,7 @@ function openJourneyAdd(i) {
   const go = m.querySelector("#jGo"), txt = m.querySelector("#jTxt"), sync = () => go.disabled = !(full || txt.value.trim());
   const take = async file => {
     if (!file || !file.type.startsWith("image/")) return;
-    try { [full, thumb] = await Promise.all([resizeFit(file, 1400, .78), resizeFit(file, 480, .72)]); m.querySelector("#jPrev img").src = thumb; m.querySelector("#jPrev").hidden = false; m.querySelector("#jDrop").hidden = true; sync(); }
+    try { [full, thumb] = await Promise.all([resizeFit(file, 1280, .76, 420000), resizeFit(file, 420, .7, 45000)]); m.querySelector("#jPrev img").src = thumb; m.querySelector("#jPrev").hidden = false; m.querySelector("#jDrop").hidden = true; sync(); }
     catch { m.querySelector("#jErr").textContent = "الصورة دي مش مدعومة. جرب JPG أو PNG."; }
   };
   m.querySelector("#jFile").onchange = e => take(e.target.files[0]);
@@ -753,7 +794,8 @@ function openAdmin() {
       body.innerHTML = `<p class="ar adm-note">${memsAll.length} ذكرى. تقدر تعدّل الكابشن أو تمسح أي واحدة.</p>` + (memsAll.map(x => `<div class="adm-mem"><img src="${esc(x.thumb)}" alt="" loading="lazy"><div class="tx"><b style="text-transform:capitalize">${esc(first2(x.authorName))}</b><small>${fmtDate(x.createdAt)}</small>${editing === x.id ? `<textarea id="admCap" rows="3" maxlength="300" dir="auto">${esc(x.caption)}</textarea><div class="adm-act"><button class="btn primary sm" data-save="${x.id}">Save</button><button class="btn sm" data-cancel>Cancel</button></div>` : `<p dir="auto">${esc(x.caption)}</p>`}</div>${editing === x.id ? "" : `<div class="adm-act col"><button class="btn sm" data-edit="${x.id}">${ic("edit")}Edit</button><button class="btn sm" data-del="${x.id}" style="color:var(--danger)">${ic("trash")}Delete</button></div>`}</div>`).join("") || `<div class="hint" style="padding:20px">مفيش ذكريات لسه.</div>`);
     } else {
       const list = [...journey].sort((a, b) => ms(b.createdAt) - ms(a.createdAt));
-      body.innerHTML = `<p class="ar adm-note">للإضافة: دوس على أي سنة في قسم Journey واختار Add. هنا تقدر تمسح.</p>` + (list.map(j => `<div class="adm-mem">${j.thumb ? `<img src="${esc(j.thumb)}" alt="" loading="lazy">` : `<div class="adm-ph">${ic("route")}</div>`}<div class="tx"><b>${esc(JOURNEY[j.year]?.year || "")} · ${esc(JOURNEY[j.year]?.date || "")}</b><small>${fmtDate(j.createdAt)}</small><p dir="auto">${esc(j.text || "")}</p></div><div class="adm-act col"><button class="btn sm" data-jdel="${j.id}" style="color:var(--danger)">${ic("trash")}Delete</button></div></div>`).join("") || `<div class="hint" style="padding:20px">مفيش حاجة في الجيرني لسه.</div>`);
+      const hid = STATIC_J.filter(jHidden);
+      body.innerHTML = `<p class="ar adm-note">للإضافة: دوس على أي سنة في قسم Journey واختار Add. لتعديل كابشن أي صورة: افتح السنة ودوس على القلم.</p>` + (hid.length ? `<p class="ar adm-note"><b>صور مخفية (${hid.length})</b></p>` + hid.map(h => `<div class="adm-mem"><img src="${esc(h.thumb)}" alt=""><div class="tx"><b>${esc(JOURNEY[h.year]?.year || "")}</b><p dir="auto">${esc(jCap(h))}</p></div><div class="adm-act col"><button class="btn sm" data-jshow="${h.id}">Restore</button></div></div>`).join("") : "") + (list.map(j => `<div class="adm-mem">${j.thumb ? `<img src="${esc(j.thumb)}" alt="" loading="lazy">` : `<div class="adm-ph">${ic("route")}</div>`}<div class="tx"><b>${esc(JOURNEY[j.year]?.year || "")} · ${esc(JOURNEY[j.year]?.date || "")}</b><small>${fmtDate(j.createdAt)}</small><p dir="auto">${esc(j.text || "")}</p></div><div class="adm-act col"><button class="btn sm" data-jdel="${j.id}" style="color:var(--danger)">${ic("trash")}Delete</button></div></div>`).join("") || `<div class="hint" style="padding:20px">مفيش حاجة في الجيرني لسه.</div>`);
     }
   };
   m.addEventListener("click", async e => {
@@ -767,6 +809,8 @@ function openAdmin() {
       try { await updateDoc(doc(db, "memories", sv.dataset.save), { caption: t2, edited: true }); const x = memsAll.find(z => z.id === sv.dataset.save); x.caption = t2; editing = ""; toast("اتعدّل الكابشن."); draw(); } catch (err) { console.error(err); toast("معرفتش أعدّل.", true); } return; }
     const dl = e.target.closest("[data-del]");
     if (dl) { if (!await confirmBox("تمسح الذكرى دي؟")) return; try { await purgeMemory(dl.dataset.del); memsAll = memsAll.filter(z => z.id !== dl.dataset.del); toast("اتمسحت."); draw(); } catch (err) { console.error(err); toast("معرفتش أمسحها.", true); } return; }
+    const js = e.target.closest("[data-jshow]");
+    if (js) { try { await setDoc(doc(db, "journeyCaps", js.dataset.jshow), { hidden: false }, { merge: true }); toast("اترجعت."); setTimeout(draw, 300); } catch (err) { console.error(err); toast("معرفتش أرجعها.", true); } return; }
     const jd = e.target.closest("[data-jdel]");
     if (jd) { await deleteJourneyItem(jd.dataset.jdel); setTimeout(draw, 400); }
   });
@@ -970,7 +1014,11 @@ document.addEventListener("click", e => {
     case "share": openUpload(); break;
     case "admin": if (isAdmin()) { $$(".modal").forEach(m => m.close()); openAdmin(); } break;
     case "zoom": if (viewer && viewer.id === v) { $("pvIn")?.focus(); } else openMemory(v, { focus: !!t.dataset.focus }); break;
-    case "zoomj": openPhoto("j:" + v); break;
+    case "zoomj": openPhoto(v.startsWith("s:") ? v : "j:" + v); break;
+    case "jedit": if (yearOpen) { yearOpen.editing = v; fillYear(); yearOpen.m.querySelector(".jedit")?.focus(); } break;
+    case "jcancel": if (yearOpen) { yearOpen.editing = ""; fillYear(); } break;
+    case "jsave": saveJCap(v); break;
+    case "jhide": hideStatic(v); break;
     case "memmenu": memMenu(v); break;
     case "rxlist": openReactors(v); break;
     case "editcap": if (viewer) { viewer.editing = true; put($("pvTop"), viewerTop(memCache.get(viewer.id))); $("pvCap")?.focus(); } break;

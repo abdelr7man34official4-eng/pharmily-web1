@@ -122,14 +122,10 @@ body{overflow-x:hidden;overflow-x:clip;max-width:100vw}
 #memMore{display:none}
 .memall-wrap{display:flex;justify-content:center;margin-top:6px}
 .memall-wrap .btn{width:100%;justify-content:center}
-.maov{position:fixed;inset:0;z-index:110;background:var(--bg);overflow-y:auto;overscroll-behavior:contain;padding:calc(env(safe-area-inset-top,0px) + 8px) 14px calc(env(safe-area-inset-bottom,0px) + 28px);opacity:0;transform:translateY(28px);transition:opacity .3s var(--ease),transform .45s var(--ease)}
-.maov.in{opacity:1;transform:none}
-.ma-top{display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:0;z-index:3;padding:10px 0 12px;background:linear-gradient(var(--bg) 78%,transparent)}
-.ma-top b{display:block;font-family:var(--display);font-size:1.15rem;color:var(--g2);font-weight:600}
-.ma-top small{opacity:.65;font-size:.78rem}
-.ma-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start}
-.ma-grid>.mem{content-visibility:auto;contain-intrinsic-size:auto 330px}
-.maov .more{display:flex;justify-content:center;margin-top:16px}
+.ma-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+/* الموقع ثابت: مفيش زوم للصفحة، والزوم بيشتغل على الصورة بس */
+html,body{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+input,textarea,select{font-size:16px!important}
 /* أخف على الموبايل: من غير أنيميشن مستمر على كروت الأدمن */
 .st.role-admin,.st.role-core{animation:none}
 .st .aura{animation:none}

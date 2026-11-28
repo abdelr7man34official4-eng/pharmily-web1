@@ -649,3 +649,27 @@ body.is-admin .msgbtn,body.is-admin [data-act="chat"],body.is-admin [data-act="e
 .adm-act{display:flex;gap:8px;margin-top:8px}.adm-act.col{flex-direction:column;margin:0}
 @media (max-width:760px){.adm-row{flex-wrap:wrap}.adm-mem{flex-wrap:wrap}.adm-mem img,.adm-ph{width:72px;height:72px}.adm-act.col{flex-direction:row;width:100%}}
 .adm-q{width:100%;margin:8px 0 12px;padding:.8em 1.1em;border-radius:99px;border:1px solid var(--line);background:rgba(var(--gw),.04);color:inherit;font:inherit}
+
+/* ===== View all (شاشة كاملة خفيفة) ===== */
+.maov{position:fixed;inset:0;z-index:110;background:var(--bg);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:calc(env(safe-area-inset-top,0px) + 8px) 16px calc(env(safe-area-inset-bottom,0px) + 32px);opacity:0;transform:translateY(24px);transition:opacity .3s var(--ease),transform .4s var(--ease)}
+.maov.in{opacity:1;transform:none}
+.ma-wrap{max-width:1280px;margin:0 auto}
+.ma-top{display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:0;z-index:3;padding:12px 0 14px;background:linear-gradient(var(--bg) 78%,transparent)}
+.ma-top b{display:block;font-family:var(--display);font-size:1.25rem;color:var(--g2);font-weight:600}
+.ma-top small{opacity:.65;font-size:.78rem}
+.ma-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px;align-items:start}
+.ma-sent{display:flex;justify-content:center;margin-top:20px;min-height:48px}
+.mini{display:grid;gap:8px;padding:8px;border-radius:20px;border:1px solid var(--line);background:var(--panel);contain:layout paint style}
+.mini .pic{display:block;width:100%;aspect-ratio:4/5;border-radius:14px;overflow:hidden;background:var(--img);cursor:pointer;padding:0;border:0}
+.mini .pic img{width:100%;height:100%;object-fit:cover;display:block}
+.mini .mi-tx{padding:0 4px 4px;display:grid;gap:3px;min-width:0}
+.mini p{margin:0;font-size:.85rem;line-height:1.5;color:var(--g2);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;unicode-bidi:plaintext;text-align:start}
+.mini small{opacity:.62;font-size:.72rem;text-transform:capitalize}
+/* زوم الصورة */
+.zoomable{touch-action:none;cursor:zoom-in;will-change:transform;transform-origin:center center;user-select:none;-webkit-user-drag:none}
+.zoomable.zoomed{cursor:grab}
+.pv-img{overflow:hidden}
+.lb{overflow:hidden}
+.lb img.zoomable.zoomed{position:relative;z-index:4}
+/* تعديل كابشن الجيرني */
+.jedit{width:100%;border-radius:14px;padding:.7em .9em;border:1px solid var(--line2);background:transparent;color:inherit;font:inherit}

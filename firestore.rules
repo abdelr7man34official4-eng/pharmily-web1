@@ -103,7 +103,10 @@ service cloud.firestore {
         && request.resource.data.text is string && request.resource.data.text.size() <= 600
         && request.resource.data.thumb is string && request.resource.data.thumb.size() < 200000
         && (request.resource.data.text.size() > 0 || request.resource.data.thumb.size() > 0);
-      allow update: if false;
+      // الأدمن بس يقدر يغير الكابشن (النص) بتاع صور الجيرني
+      allow update: if isAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['text'])
+        && request.resource.data.text is string && request.resource.data.text.size() <= 600;
       allow delete: if isAdmin();
 
       match /blobs/{b} {
@@ -112,6 +115,15 @@ service cloud.firestore {
           && request.resource.data.data is string && request.resource.data.data.size() < 950000;
         allow delete: if isAdmin();
       }
+    }
+
+    // ---------- كابشنات صور الجيرني الثابتة (اللي جاية من ملفات الموقع): الأدمن بس يعدّل أو يخفي ----------
+    match /journeyCaps/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin()
+        && request.resource.data.keys().hasOnly(['caption', 'hidden'])
+        && (!('caption' in request.resource.data) || (request.resource.data.caption is string && request.resource.data.caption.size() <= 600))
+        && (!('hidden' in request.resource.data) || request.resource.data.hidden is bool);
     }
 
     // ---------- إلغاء التسجيل (رقم نسخة لكل طالب، بيقراه أي حد وبيكتبه الأدمن بس) ----------
