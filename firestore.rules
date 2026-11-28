@@ -126,6 +126,13 @@ service cloud.firestore {
         && (!('hidden' in request.resource.data) || request.resource.data.hidden is bool);
     }
 
+    // ---------- ترتيب صور الجيرني لكل سنة: الأدمن بس بيغيره ----------
+    match /journeyOrder/{y} {
+      allow read: if signedIn();
+      allow write: if isAdmin() && request.resource.data.keys().hasOnly(['ids'])
+        && request.resource.data.ids is list && request.resource.data.ids.size() <= 300;
+    }
+
     // ---------- إلغاء التسجيل (رقم نسخة لكل طالب، بيقراه أي حد وبيكتبه الأدمن بس) ----------
     match /resets/{k} {
       allow read: if true;

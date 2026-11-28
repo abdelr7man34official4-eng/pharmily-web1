@@ -284,6 +284,7 @@ async function startApp(profile, justRegistered) {
     renderAll();
   }, fail));
   listenMemories(); listenJourney();
+  unsubs.push(onSnapshot(collection(db, "journeyOrder"), snap => { orderMap.clear(); snap.forEach(d => orderMap.set(+d.id, d.data().ids || [])); fillYear(); }, () => { }));
   unsubs.push(onSnapshot(collection(db, "journeyCaps"), snap => { capsMap.clear(); snap.forEach(d => capsMap.set(d.id, d.data())); renderJourney(); fillYear(); }, () => { }));
   if (!me.isAdmin) {   // الأدمن مالوش شات ولا Future Me ولا ذكريات باسمه
     unsubs.push(onSnapshot(query(collection(db, "memories"), where("authorId", "==", me.uid), limit(1)), snap => { myMemCount = snap.size; flags.mem = true; renderAll(); }, fail));
@@ -661,6 +662,8 @@ let journey = [], yearOpen = null;
 const STATIC_J = typeof JOURNEY_PHOTOS !== "undefined" ? JOURNEY_PHOTOS : [], capsMap = new Map();
 const jCap = st => { const c = capsMap.get(st.id); return c && typeof c.caption === "string" ? c.caption : st.caption; };
 const jHidden = st => !!capsMap.get(st.id)?.hidden;
+const orderMap = new Map();   // year -> [keys] ترتيب الأدمن (s:id للصور الثابتة، j:id للي اتضافت من الموقع)
+const orderItems = (i, items) => { const o = orderMap.get(i) || [], pos = k => { const n = o.indexOf(k); return n < 0 ? 1e6 : n; }; return items.map((x, n) => [x, n]).sort((a, b) => pos(a[0][0]) - pos(b[0][0]) || a[1] - b[1]).map(x => x[0]); };
 const jStatic = i => STATIC_J.filter(st => st.year === i && !jHidden(st));
 function listenJourney() {
   unsubs.push(onSnapshot(query(collection(db, "journey"), orderBy("createdAt", "desc"), limit(300)), snap => {
@@ -691,20 +694,31 @@ function fillYear() {
   const txtBlock = (key, text) => ed === key
     ? `<textarea class="jedit" rows="3" maxlength="600" dir="auto" placeholder="اكتب الكابشن…">${esc(text)}</textarea><div class="pf-act" style="margin:8px 0 0"><button class="btn primary sm" data-act="jsave" data-v="${esc(key)}">${ic("check")}Save</button><button class="btn sm" data-act="jcancel">Cancel</button></div>`
     : (text ? `<p dir="auto">${esc(text)}</p>` : "");
+  const mvb = (key, n) => ["jup", "jdown"].map((act, d) => `<button class="circle" data-act="${act}" data-v="${esc(key)}" aria-label="${d ? "Move down" : "Move up"}" title="${d ? "Move down · نزّل" : "Move up · طلّع"}" ${(d ? n === total - 1 : n === 0) ? "disabled" : ""} style="width:34px;height:34px"><svg class="ic" style="transform:rotate(${d ? 90 : -90}deg)"><use href="#i-chev-r"/></svg></button>`).join("");
   const cbtn = (act, key, icon, label) => `<button class="circle" data-act="${act}" data-v="${esc(key)}" aria-label="${label}" title="${label}" style="width:34px;height:34px">${ic(icon)}</button>`;
+  const total = jStatic(i).length + journey.filter(j => j.year === i).length, posOf = key => (yearOpen.keys || []).indexOf(key);
   const stat = jStatic(i).map(st => {
     const text = jCap(st); memCache.set("s:" + st.id, { id: st.id, thumb: st.thumb, full: st.full, text, authorName: "Pharmily 16", authorId: "", _col: "journey" });
-    return `<article class="jit"><button class="jpic" data-act="zoomj" data-v="s:${st.id}" aria-label="Open photo"><img src="${esc(st.thumb)}" alt="" loading="lazy" decoding="async"></button>
-      <div class="jtx">${txtBlock("s:" + st.id, text)}${adm && ed !== "s:" + st.id ? `<div class="by" style="gap:8px">${cbtn("jedit", "s:" + st.id, "edit", "Edit caption")}${cbtn("jhide", "s:" + st.id, "trash", "Hide photo")}</div>` : ""}</div></article>`;
-  }).join("");
+    return ["s:" + st.id, (n) => `<article class="jit"><button class="jpic" data-act="zoomj" data-v="s:${st.id}" aria-label="Open photo"><img src="${esc(st.thumb)}" alt="" loading="lazy" decoding="async"></button>
+      <div class="jtx">${txtBlock("s:" + st.id, text)}${adm && ed !== "s:" + st.id ? `<div class="by" style="gap:8px">${mvb("s:" + st.id, n)}${cbtn("jedit", "s:" + st.id, "edit", "Edit caption")}${cbtn("jhide", "s:" + st.id, "trash", "Hide photo")}</div>` : ""}</div></article>`];
+  });
   const list = journey.filter(j => j.year === i).sort((a, b) => ms(b.createdAt) - ms(a.createdAt));
   const dyn = list.map(j => {
     const u = users.get(j.authorId), own = adm || j.authorId === me.uid;
-    return `<article class="jit">${j.thumb ? `<button class="jpic" data-act="zoomj" data-v="${j.id}" aria-label="Open photo"><img src="${esc(j.thumb)}" alt="" loading="lazy" decoding="async"></button>` : ""}
-      <div class="jtx">${txtBlock("j:" + j.id, j.text || "")}<div class="by">${av(j.authorName, u?.photo, 30)}<span><b>${esc(first2(j.authorName))}</b><small>${fmtDate(j.createdAt)}</small></span>${adm && ed !== "j:" + j.id ? `<span style="margin-inline-start:auto;display:flex;gap:8px">${cbtn("jedit", "j:" + j.id, "edit", "Edit caption")}${own ? cbtn("deljit", j.id, "trash", "Delete") : ""}</span>` : (own && !adm ? `<button class="circle" data-act="deljit" data-v="${j.id}" aria-label="Delete" style="width:34px;height:34px;margin-inline-start:auto">${ic("trash")}</button>` : "")}</div></div></article>`;
-  }).join("");
-  const html = stat + dyn + (y.photos.length ? `<div class="ph">${y.photos.map(p => `<img src="${esc(p)}" alt="" loading="lazy">`).join("")}</div>` : "");
+    return ["j:" + j.id, (n) => `<article class="jit">${j.thumb ? `<button class="jpic" data-act="zoomj" data-v="${j.id}" aria-label="Open photo"><img src="${esc(j.thumb)}" alt="" loading="lazy" decoding="async"></button>` : ""}
+      <div class="jtx">${txtBlock("j:" + j.id, j.text || "")}<div class="by">${av(j.authorName, u?.photo, 30)}<span><b>${esc(first2(j.authorName))}</b><small>${fmtDate(j.createdAt)}</small></span>${adm && ed !== "j:" + j.id ? `<span style="margin-inline-start:auto;display:flex;gap:8px">${mvb("j:" + j.id, n)}${cbtn("jedit", "j:" + j.id, "edit", "Edit caption")}${own ? cbtn("deljit", j.id, "trash", "Delete") : ""}</span>` : (own && !adm ? `<button class="circle" data-act="deljit" data-v="${j.id}" aria-label="Delete" style="width:34px;height:34px;margin-inline-start:auto">${ic("trash")}</button>` : "")}</div></div></article>`];
+  });
+  const all = orderItems(i, [...stat, ...dyn]); yearOpen.keys = all.map(x => x[0]);
+  const html = all.map((x, n) => x[1](n)).join("") + (y.photos.length ? `<div class="ph">${y.photos.map(p => `<img src="${esc(p)}" alt="" loading="lazy">`).join("")}</div>` : "");
   put(yearOpen.m.querySelector("#jList"), html || `<div class="empty-box" style="padding:30px 14px"><span style="color:var(--g)">${ic("sparkles")}</span><b class="ar" style="color:var(--g2)">لسه مفيش حاجة في السنة دي. ${adm ? "ضيف أول ذكرى!" : "قريب هيتضاف هنا حاجات حلوة 💗"}</b></div>`);
+}
+async function moveJ(key, dir) {
+  if (!isAdmin() || !yearOpen) return; const keys = [...(yearOpen.keys || [])], a = keys.indexOf(key), b = a + dir;
+  if (a < 0 || b < 0 || b >= keys.length) return;
+  [keys[a], keys[b]] = [keys[b], keys[a]];
+  orderMap.set(yearOpen.i, keys); fillYear();   // يتحرك فورًا، وبعدين بيتحفظ
+  try { await setDoc(doc(db, "journeyOrder", String(yearOpen.i)), { ids: keys }); }
+  catch (e) { console.error(e); toast("معرفتش أحفظ الترتيب.", true); }
 }
 async function saveJCap(key) {
   if (!isAdmin() || !yearOpen) return; const ta = yearOpen.m.querySelector(".jedit"); if (!ta) return; const t = ta.value.trim();
@@ -1018,6 +1032,8 @@ document.addEventListener("click", e => {
     case "jedit": if (yearOpen) { yearOpen.editing = v; fillYear(); yearOpen.m.querySelector(".jedit")?.focus(); } break;
     case "jcancel": if (yearOpen) { yearOpen.editing = ""; fillYear(); } break;
     case "jsave": saveJCap(v); break;
+    case "jup": moveJ(v, -1); break;
+    case "jdown": moveJ(v, 1); break;
     case "jhide": hideStatic(v); break;
     case "memmenu": memMenu(v); break;
     case "rxlist": openReactors(v); break;
